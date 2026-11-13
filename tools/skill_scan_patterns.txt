@@ -1,0 +1,27 @@
+# Static scan for skills and tools Jarvis drafts itself. One regex per line: "<group>\t<regex>".
+# A draft matching any of these is never offered for adding. Case-insensitive. Lines starting with # are comments.
+egress	\bcurl\b
+egress	\bwget\b
+egress	\bnc\s+-
+egress	requests\.(get|post|put)
+egress	urllib|httpx|aiohttp
+egress	https?://(?!localhost|127\.0\.0\.1)
+pipe_to_shell	\|\s*(ba|z)?sh\b
+credentials	\.ssh/
+credentials	pgpass
+credentials	\.netrc
+credentials	git-credentials
+credentials	\.aws/
+credentials	gcloud/(credentials|legacy|application_default)
+credentials	page\.key
+credentials	Handover\.md
+credentials	password|passwd|secret|api[_-]?key|bearer|private[_-]?key
+send_post	slack_send|send_message|schedule_message|create_canvas|update_canvas
+send_post	outlook_send|send_mail|sendMail
+send_post	addCommentToJiraIssue|createJiraIssue|editJiraIssue|transitionJiraIssue|addWorklog
+send_post	createConfluencePage|updateConfluencePage|createConfluence\w*Comment
+send_post	/api/(slack_send|approvals_|close_action|jira/)
+new_mcp	mcpServers|claude\s+mcp\s+add|\.mcp\.json
+db_write	\b(insert\s+into|update\s+\w+\s+set|delete\s+from|drop\s+table|truncate)\b
+memory_edit	/memory/|MEMORY\.md|~/\.claude/(skills|agent-memory|scheduled-tasks)
+tools_grant	allowed-tools:.*\b(Bash|Write|Edit|NotebookEdit)\b

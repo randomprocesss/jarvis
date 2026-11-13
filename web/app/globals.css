@@ -1,0 +1,585 @@
+@import "tailwindcss";
+
+/* Dark mode is opt-in (the bar's toggle sets data-theme="dark" on <html>), exactly like the old app. */
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
+/* ---------- design tokens: the same values as static/app.css ---------- */
+:root {
+  color-scheme: light;
+  --canvas: #f5f6f8; --card: #ffffff; --card-2: #f8f9fb;
+  --ink: #17212b; --ink-2: #34424f; --mute: #66727e;
+  --line: #e2e6ea; --line-2: #eef1f4; --line-3: #cfd6dc;
+  --chrome: #fbfbfc; --chrome-2: #f2f4f6; --chrome-ink: #17212b; --chrome-mute: #66727e; --lime: #2563c9;
+  --ion: #2563c9; --ion-2: #3b7be0; --ion-3: #1d4fa3; --ion-soft: #e6eefb;
+  --ok: #2e7d4f; --ok-soft: #e4f2ea; --warn: #b4621a; --warn-soft: #fbeedd; --bad: #b8322a; --bad-soft: #f9e4e2; --info: #2c5d77; --info-soft: #e0ecf2;
+  --s-slack: #6e4bd8; --s-email: #2a73c8; --s-teams: #4f5fd6; --s-calendar: #b26f12; --s-jira: #2a5597; --s-confluence: #0e7490; --s-bitbucket: #1f5fc4;
+  --s-meeting: #0f8f7c; --s-other: #66727e; --s-jarvis: #2563c9;
+  --sh-xs: 0 1px 2px rgba(16,24,32,.05);
+  --sh-sm: 0 1px 3px rgba(16,24,32,.07), 0 1px 2px rgba(16,24,32,.04);
+  --sh-md: 0 8px 20px -6px rgba(16,24,32,.12);
+  --sh-lg: 0 22px 48px -14px rgba(16,24,32,.24);
+  --f-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", system-ui, sans-serif;
+  --f-body: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  --f-mono: ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* shadcn/ui variable names, mapped onto the tokens above */
+  --background: var(--canvas);
+  --foreground: var(--ink);
+  --card-foreground: var(--ink);
+  --popover: var(--card);
+  --popover-foreground: var(--ink);
+  --primary: var(--ion);
+  --primary-foreground: #ffffff;
+  --secondary: var(--card-2);
+  --secondary-foreground: var(--ink);
+  --muted: var(--line-2);
+  --muted-foreground: var(--mute);
+  --accent: var(--ion-soft);
+  --accent-foreground: var(--ink);
+  --destructive: var(--bad);
+  --border: var(--line);
+  --input: var(--line-3);
+  --ring: var(--ion);
+  --radius: 0.75rem;
+  --sh-card: 0 1px 2px rgba(16,24,32,.04);
+  --sh-card-hover: 0 2px 4px rgba(16,24,32,.04), 0 10px 24px -12px rgba(16,24,32,.18);
+  --skel-a: #e9edf0; --skel-b: #f6f8f9;
+  /* names the older components still use, pointed at the calm palette (no glow, one accent) */
+  --arc: var(--ion); --arc-hi: var(--ion); --arc-glow: transparent;
+  --accent-red: var(--bad); --accent-gold: var(--warn);
+  --ground: var(--canvas); --ground-2: var(--canvas);
+  --glass-ink: var(--ink); --glass-ink-2: var(--ink-2); --glass-mute: var(--mute);
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --canvas: #0f1317; --card: #171c21; --card-2: #1c2228;
+  --ink: #e8ecef; --ink-2: #c3ccd3; --mute: #8b98a3;
+  --line: rgba(255,255,255,.09); --line-2: rgba(255,255,255,.055); --line-3: rgba(255,255,255,.17);
+  --chrome: #0b0e11; --chrome-2: #12161a; --chrome-ink: #e8ecef; --chrome-mute: #8b98a3; --lime: #6aa8ff;
+  --ion: #6aa8ff; --ion-2: #8fbdff; --ion-3: #4a8fef; --ion-soft: rgba(106,168,255,.14);
+  --ok: #6fca95; --ok-soft: rgba(111,202,149,.14); --warn: #e3a64a; --warn-soft: rgba(227,166,74,.14); --bad: #f07f78; --bad-soft: rgba(240,127,120,.14); --info: #9fb9c8; --info-soft: rgba(159,185,200,.12);
+  --s-slack: #b69cff; --s-email: #7bb8f7; --s-teams: #93a4ff; --s-calendar: #e8b04b; --s-jira: #7bb8f7; --s-confluence: #5fd8e8; --s-bitbucket: #7aa7f5;
+  --s-meeting: #4fd1bd; --s-other: #8b98a3; --s-jarvis: #6aa8ff;
+  --sh-xs: 0 1px 2px rgba(0,0,0,.3); --sh-sm: 0 1px 3px rgba(0,0,0,.35); --sh-md: 0 10px 24px -8px rgba(0,0,0,.5); --sh-lg: 0 24px 50px -14px rgba(0,0,0,.6);
+  --primary-foreground: #0b1220;
+  --sh-card: 0 1px 2px rgba(0,0,0,.25); --sh-card-hover: 0 12px 28px -12px rgba(0,0,0,.6);
+  --skel-a: rgba(255,255,255,.05); --skel-b: rgba(255,255,255,.1);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-canvas: var(--canvas);
+  --color-card-2: var(--card-2);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-mute: var(--mute);
+  --color-line: var(--line);
+  --color-line-2: var(--line-2);
+  --color-line-3: var(--line-3);
+  --color-chrome: var(--chrome);
+  --color-chrome-2: var(--chrome-2);
+  --color-chrome-ink: var(--chrome-ink);
+  --color-chrome-mute: var(--chrome-mute);
+  --color-lime: var(--lime);
+  --color-ion: var(--ion);
+  --color-ion-3: var(--ion-3);
+  --color-ion-soft: var(--ion-soft);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-bad: var(--bad);
+  --color-bad-soft: var(--bad-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --font-display: var(--f-display);
+  --font-sans: var(--f-body);
+  --font-mono: var(--f-mono);
+  --shadow-xs: var(--sh-xs);
+  --shadow-sm: var(--sh-sm);
+  --shadow-md: var(--sh-md);
+  --shadow-lg: var(--sh-lg);
+  --shadow-card: var(--sh-card);
+  --shadow-card-hover: var(--sh-card-hover);
+}
+
+@layer base {
+  *, ::before, ::after { border-color: var(--line); }
+  html { scroll-padding-top: 72px; }
+  body {
+    margin: 0; min-height: 100vh; background: var(--canvas); color: var(--ink);
+    font: 400 15px/1.55 var(--f-body); -webkit-font-smoothing: antialiased; overflow-x: hidden;
+    font-variant-numeric: tabular-nums;
+  }
+  ::selection { background: var(--ion-soft); color: var(--ink); }
+  :focus-visible { outline: 2px solid var(--ion); outline-offset: 2px; }
+  button, [role="button"], summary, label.cb { cursor: pointer; }
+  button:disabled { cursor: not-allowed; }
+  a { color: inherit; }
+  code { font-family: var(--f-mono); font-size: .88em; }
+}
+
+@layer components {
+  /* source label: coloured dot + mono caps */
+  .src { display: inline-flex; align-items: center; gap: 6px; font: 500 11.5px var(--f-mono); letter-spacing: .04em; text-transform: uppercase; color: var(--c, var(--s-other)); }
+  .src::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--c, var(--s-other)); }
+
+  /* round tick box (green) and square pick box (blue) */
+  .cb { position: relative; display: inline-grid; place-items: center; width: 18px; height: 18px; margin-top: 2px; flex: none; }
+  .cb input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+  .cb span { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--line-3); background: var(--card); display: grid; place-items: center; transition: background-color .15s, border-color .15s; }
+  .cb:hover span { border-color: var(--ok); }
+  .cb input:checked + span { border-color: var(--ok); background: var(--ok); }
+  .cb input:checked + span::after { content: ""; width: 5px; height: 9px; border: solid #fff; border-width: 0 2px 2px 0; transform: translate(0,-1px) rotate(45deg); }
+  .cb input:focus-visible + span { outline: 2px solid var(--ion); outline-offset: 2px; }
+  .cb.sq span { border-radius: 5px; }
+  .cb.sq input:checked + span { border-color: var(--ion); background: var(--ion); }
+
+  /* quiet disclosure: "How Claude checked ›" */
+  details.found > summary { cursor: pointer; font: 600 13px var(--f-body); color: var(--mute); list-style: none; width: fit-content; }
+  details.found > summary:hover { color: var(--ion); }
+  details > summary::-webkit-details-marker { display: none; }
+  details.found.pd > summary { font-size: 12.5px; }
+
+  /* table/inline inputs (Weekly close hours) */
+  .in { width: 100%; padding: 7px 9px; border: 1px solid transparent; border-radius: 6px; background-color: transparent; color: var(--ink); font: 400 14px var(--f-body); transition: border-color .15s, background-color .15s, box-shadow .15s; }
+  .in:hover { border-color: var(--line-3); }
+  .in:focus { outline: none; border-color: var(--ion); background-color: var(--card); box-shadow: 0 0 0 3px var(--ion-soft); }
+  .in.boxed { border-color: var(--line-3); background-color: var(--card); }
+  select.in, select.sel {
+    appearance: none; -webkit-appearance: none; cursor: pointer; padding-right: 28px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235f6e78' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 9px center; background-size: 12px;
+  }
+  select option { background: var(--card); color: var(--ink); }
+  .in.mono { font: 400 13px var(--f-mono); }
+  input.in.num { text-align: right; font: 500 14px var(--f-mono); font-variant-numeric: tabular-nums; }
+  .in.st {
+    padding-left: 26px;
+    background-image: radial-gradient(circle, var(--c) 0 3.5px, transparent 4px), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235f6e78' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-position: 9px 50%, right 9px center; background-size: 10px 10px, 12px; background-repeat: no-repeat; font-size: 13.5px;
+  }
+  .in.invalid { border-color: var(--bad); background-color: var(--bad-soft); }
+  .in.is-new { color: var(--warn); background-color: var(--warn-soft); }
+  textarea.in { display: block; resize: none; overflow: hidden; min-height: 34px; line-height: 1.45; }
+  textarea.in.ttl { font-weight: 600; font-size: 14.5px; }
+  textarea.in.dsc { color: var(--mute); font-size: 13.5px; margin-top: 1px; }
+
+  .tbl { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 980px; }
+  .tbl th { padding: 12px 10px; border-bottom: 1px solid var(--line); background: var(--card-2); text-align: left; white-space: nowrap; font: 500 11.5px var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--mute); }
+  .tbl th:first-child { border-top-left-radius: 12px; } .tbl th:last-child { border-top-right-radius: 12px; }
+  .tbl td { padding: 6px; border-bottom: 1px solid var(--line-2); vertical-align: top; }
+  .tbl tbody tr:last-child td { border-bottom: 0; }
+  .tbl .num { text-align: right; }
+  .dayrow td { padding: 16px 14px 6px !important; border-bottom: 0 !important; font: 600 12px var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); }
+  .dayrow td span { margin-left: 12px; letter-spacing: 0; text-transform: none; color: var(--mute); font: 400 13px var(--f-body); }
+
+  .spin { width: 13px; height: 13px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: wh-spin .7s linear infinite; }
+  .flash { animation: wh-flash 1.6s ease-out; }
+
+  /* shimmer skeleton */
+  .skel { background: linear-gradient(90deg, var(--skel-a) 0%, var(--skel-b) 45%, var(--skel-a) 90%); background-size: 220% 100%; animation: wh-shimmer 1.3s ease-in-out infinite; border-radius: 8px; }
+  /* live dot */
+  .live-dot { position: relative; }
+  .live-dot::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; background: currentColor; opacity: .35; animation: wh-ping 1.6s cubic-bezier(0,0,.2,1) infinite; }
+  /* thin scrollbars in panes */
+  .pane { scrollbar-width: thin; scrollbar-color: var(--line-3) transparent; }
+}
+@keyframes wh-shimmer { from { background-position: 120% 0; } to { background-position: -120% 0; } }
+@keyframes wh-ping { 75%, 100% { transform: scale(2.2); opacity: 0; } }
+
+/* dialogs: CSS enter/exit keyed on Radix data-state (Radix waits for the exit animation) */
+.wh-overlay[data-state="open"] { animation: wh-fade-in .15s ease-out; }
+.wh-overlay[data-state="closed"] { animation: wh-fade-out .12s ease-in forwards; }
+.wh-sheet[data-state="open"] { animation: wh-pop-in .17s cubic-bezier(.2,.8,.2,1); }
+.wh-sheet[data-state="closed"] { animation: wh-pop-out .12s ease-in forwards; }
+.wh-drawer[data-state="open"] { animation: wh-slide-in .22s cubic-bezier(.2,.8,.2,1); }
+.wh-drawer[data-state="closed"] { animation: wh-slide-out .16s ease-in forwards; }
+@keyframes wh-slide-in { from { transform: translateX(-100%); } }
+@keyframes wh-slide-out { to { transform: translateX(-100%); } }
+@keyframes wh-fade-in { from { opacity: 0; } }
+@keyframes wh-fade-out { to { opacity: 0; } }
+@keyframes wh-pop-in { from { opacity: 0; transform: translateY(-6px) scale(.985); } }
+@keyframes wh-pop-out { to { opacity: 0; transform: translateY(-6px) scale(.985); } }
+@keyframes wh-spin { to { transform: rotate(360deg); } }
+@keyframes wh-flash { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ion) 55%, transparent), var(--sh-card); } 35% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--ion) 22%, transparent), var(--sh-card); } 100% { box-shadow: 0 0 0 12px transparent, var(--sh-card); } }
+
+/* ==================== Jarvis "arc" theme: calm, high-end, reusable ====================
+   Restraint first: one light source (the reactor), glass panels, one ignition on load, one card hover.
+   Wrap a page in .arc-root. Dark-only for now (ignores data-theme). Guide: REBUILD_STATUS.md "Landing page — final". */
+:root {
+  --f-display-arc: var(--f-display);
+  --ease-out: cubic-bezier(.16,1,.3,1);
+}
+@theme inline {
+  --color-arc: var(--arc); --color-arc-hi: var(--arc-hi);
+  --color-accent-red: var(--accent-red); --color-accent-gold: var(--accent-gold);
+  --color-glass-ink: var(--glass-ink); --color-glass-ink-2: var(--glass-ink-2); --color-glass-mute: var(--glass-mute);
+}
+@property --sweep { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+/* an .arc-root page owns the whole window: no light-canvas flash while it fades in, no light rubber-band overscroll */
+html:has(.arc-root), html:has(.arc-root) body { background: var(--ground); }
+@layer components {
+  /* page ground: near-black navy + a barely-there vignette; Inter Tight everywhere inside (font-display too) */
+  .arc-root { --f-display: var(--f-display-arc); --reactor-size: clamp(280px, 34vw, 460px); font-family: var(--f-display-arc);
+    position: relative; isolation: isolate; overflow: clip; color: var(--glass-ink); color-scheme: dark;
+    --skel-a: rgba(255,255,255,.04); --skel-b: rgba(255,255,255,.09);
+    background: radial-gradient(ellipse 120% 90% at 50% 20%, transparent 60%, rgba(0,0,0,.35)), linear-gradient(180deg, var(--ground), var(--ground-2)); }
+  .brand-caps { position: relative; font: 500 12px/1 var(--f-display); letter-spacing: .48em; text-transform: uppercase; color: var(--glass-ink); text-decoration: none; }
+  .brand-caps::after { content: ""; position: absolute; left: 0; bottom: -8px; width: 18px; height: 1px; background: var(--accent-gold); opacity: .85; }
+
+  /* hero: halo + two giant faint orbit rings (centred on the reactor, turning extremely slowly) + reactor + floor */
+  .reactor { position: relative; aspect-ratio: 1; width: var(--reactor-size); margin-inline: auto; }
+  .reactor > canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .reactor-breathe { animation: arc-breathe 8s ease-in-out infinite; }
+  .reactor-fade { animation: arc-fade 1.2s var(--ease-out) both; } /* SVG fallback only; the shader ignites itself */
+  .arc-halo { position: absolute; left: 50%; top: 50%; z-index: -1; width: min(1000px, 190vw); aspect-ratio: 1; translate: -50% -50%; border-radius: 50%;
+    pointer-events: none; background: radial-gradient(closest-side, rgba(63,200,255,.075), rgba(63,200,255,.025) 40%, transparent); }
+  .arc-orbits { position: absolute; left: 50%; top: 50%; z-index: -1; width: min(1700px, 160vw); aspect-ratio: 1; translate: -50% -50%; pointer-events: none; }
+  .arc-orbits > svg { position: absolute; left: 50%; top: 50%; width: 100%; height: 100%; translate: -50% -50%; overflow: visible;
+    animation: arc-spin 600s linear infinite reverse; }
+  .arc-orbits > svg:first-child { width: 66%; height: 66%; animation: arc-spin 420s linear infinite; }
+  .arc-floorline { position: relative; width: min(440px, 80vw); height: 1px; margin: calc(var(--reactor-size) * -.08) auto 0; }
+  .arc-floor { position: absolute; left: 50%; top: 50%; width: 72%; height: 44px; translate: -50% -50%; border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(63,200,255,.14), rgba(63,200,255,.04) 60%, transparent); }
+  .arc-hairline { position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(232,176,75,.8) 28%, rgba(179,18,29,.8) 72%, transparent); }
+  /* the one ignition (only with .arc-ignite on the root; reduced motion shows the final frame) */
+  .arc-ignite .arc-orbits { animation: arc-orbit-in 1s var(--ease-out) .15s both; }
+  .arc-ignite .arc-floor { animation: arc-fade 1s ease .3s both; }
+  .arc-ignite .arc-hairline { animation: arc-draw .5s var(--ease-out) .45s both; }
+
+  /* status chip: mono caps + breathing dot (gold and quicker while a work run is live) */
+  .arc-chip { display: inline-flex; align-items: center; gap: 10px; height: 28px; padding: 0 11px 0 12px; border-radius: 999px; font: 500 10.5px/1 var(--f-mono);
+    letter-spacing: .2em; text-transform: uppercase; color: var(--glass-ink-2); background: rgba(159,231,255,.03); box-shadow: inset 0 0 0 1px rgba(159,231,255,.13); }
+  .arc-dot { width: 7px; height: 7px; flex: none; border-radius: 50%; background: var(--ion); animation: arc-pulse 3.2s ease-in-out infinite; }
+  .arc-dot.is-live { background: var(--warn); animation-duration: 1.6s; }
+  /* type with presence: white -> pale arc blue */
+  .arc-title { background: linear-gradient(180deg, #fff 30%, #bfe8ff 95%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .arc-num { background: linear-gradient(180deg, #fff 35%, #a7cde0); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+  /* glass: blur + 1px border lighter at the top + faint top highlight + soft shadow */
+  .glass-panel { position: relative; isolation: isolate; border-radius: 16px; color: var(--ink); background: var(--card);
+    border: 1px solid var(--line); box-shadow: var(--sh-lg); }
+  .glass-panel::before { content: none; }
+  /* card hover: 2px spring lift + cursor-following light + a slow beam travelling along the 1px border
+     (needs --mx/--my from the spotlight() handler in Landing.tsx) */
+  .spotlight { transition: translate .6s linear(0, .24 4%, .62 10%, .9 17%, 1.04 25%, 1.07 32%, 1.04 41%, 1.01 53%, .995 66%, 1); }
+  .spotlight:is(:hover, :focus-visible) { translate: 0 -2px; }
+  .spotlight::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .4s var(--ease-out);
+    background: radial-gradient(340px circle at var(--mx, 50%) var(--my, 0%), rgba(159,231,255,.07), transparent 60%); }
+  .spotlight:is(:hover, :focus-visible)::after { opacity: 1; }
+  .spotlight:is(:hover, :focus-visible)::before { animation: arc-sweep 3.6s linear infinite;
+    background: conic-gradient(from var(--sweep), transparent 0 76%, rgba(159,231,255,.85) 88%, transparent 92%),
+      radial-gradient(200px circle at var(--mx, 50%) var(--my, 0%), rgba(159,231,255,.3), transparent 70%), var(--glass-border); }
+  a.glass-panel:focus-visible { outline: 2px solid var(--arc-hi); outline-offset: 3px; }
+  /* card icon in a small thin glowing ring that echoes the reactor */
+  .arc-icon { display: grid; place-items: center; width: 34px; height: 34px; flex: none; border-radius: 50%; color: var(--arc-hi);
+    background: radial-gradient(closest-side, rgba(63,200,255,.1), transparent);
+    box-shadow: inset 0 0 0 1px rgba(159,231,255,.26), 0 0 16px -6px rgba(63,200,255,.6); transition: box-shadow .4s var(--ease-out); }
+  .spotlight:is(:hover, :focus-visible) .arc-icon { box-shadow: inset 0 0 0 1px rgba(159,231,255,.45), 0 0 18px -4px rgba(63,200,255,.75); }
+
+  /* primary: deep glass pill, near-white text, soft blue inner glow, gold hairline underline */
+  .btn-arc { position: relative; display: inline-flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 24px; border-radius: 999px; color: #f6faff;
+    font: 500 15px/1 var(--f-display); text-decoration: none; background: linear-gradient(180deg, rgba(26,48,74,.6), rgba(9,20,34,.72));
+    box-shadow: inset 0 0 0 1px rgba(159,231,255,.2), inset 0 1px 0 rgba(255,255,255,.12), inset 0 -10px 22px -12px rgba(63,200,255,.45);
+    transition: box-shadow .3s var(--ease-out); }
+  .btn-arc::after { content: ""; position: absolute; left: 30%; right: 30%; bottom: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--accent-gold), transparent); opacity: .8; }
+  .btn-arc:hover { box-shadow: inset 0 0 0 1px rgba(159,231,255,.34), inset 0 1px 0 rgba(255,255,255,.16), inset 0 -12px 26px -12px rgba(63,200,255,.6); }
+  .btn-arc:focus-visible, .link-quiet:focus-visible { outline: 2px solid var(--arc-hi); outline-offset: 3px; }
+  .link-quiet { display: inline-flex; align-items: center; min-height: 48px; padding: 0 6px; color: var(--glass-mute); font: 500 15px/1 var(--f-display); text-decoration: none; transition: color .25s var(--ease-out); }
+  .link-quiet:hover { color: var(--glass-ink); }
+}
+@keyframes arc-breathe { 0%, 100% { opacity: .82; } 50% { opacity: 1; } }
+@keyframes arc-fade { from { opacity: 0; } }
+@keyframes arc-spin { to { rotate: 360deg; } }
+@keyframes arc-orbit-in { from { opacity: 0; scale: .92; } }
+@keyframes arc-draw { from { scale: 0 1; opacity: 0; } }
+@keyframes arc-pulse { 0%, 100% { opacity: .4; } 50% { opacity: 1; } }
+@keyframes arc-sweep { to { --sweep: 360deg; } }
+
+/* 12 Nov 2026 (redesign): the app is no longer dark-only. The two palettes at the top of this file do the work. */
+@layer components {
+  /* cards: navy glass, lighter at the top edge (no backdrop blur: the ground is flat, so blur would only cost frames) */
+  .glass-card { background: var(--card); }
+  /* tiny reactor mark (sidebar brand, phone header) */
+  .arc-mark { position: relative; display: inline-block; flex: none; border-radius: 50%;
+    background: var(--ion); box-shadow: inset 0 0 0 2px var(--card), 0 0 0 1.5px var(--ion); }
+  .arc-mark::after { content: none; }
+}
+
+/* 12 Nov (redesign): page titles and big numbers in the plain ink colour, the same weight on every screen */
+main h1.font-display { font-size: 26px; font-weight: 600; letter-spacing: -.02em; line-height: 1.2; }
+main :is(h2, h3).font-display { font-weight: 600; letter-spacing: -.01em; }
+main [data-num] { font-weight: 600; letter-spacing: -.02em; }
+
+/* landing -> page "materialize" (components/motion.tsx materialize()): blur + 6px depth to sharp, one arc line passing over once */
+@layer components {
+  .mz { position: relative; overflow: hidden; animation: mz-in .6s var(--ease-out) backwards; animation-delay: calc(var(--mz-i, 0) * 75ms + 140ms); }
+  .mz::after { content: ""; position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: 0;
+    background: linear-gradient(180deg, transparent 48.5%, rgba(159,231,255,.5) 50%, transparent 51.5%);
+    animation: mz-line .7s cubic-bezier(.3,.7,.3,1) backwards; animation-delay: calc(var(--mz-i, 0) * 75ms + 180ms); }
+}
+@keyframes mz-in { from { opacity: 0; transform: translateY(6px) scale(.985); filter: blur(6px); } }
+@keyframes mz-line { from { opacity: 1; transform: translateY(-52%); } 85% { opacity: .8; } to { opacity: 0; transform: translateY(52%); } }
+/* Jarvis voice (components/jarvis): the draining 3-second cancel line, the thin listening ring, quicker breathing while thinking */
+@layer components {
+  .jv-drain { transform-origin: left; animation: jv-drain var(--jv-ms, 3000ms) linear forwards; }
+  .jv-ring { box-shadow: 0 0 0 2px color-mix(in srgb, var(--ion) 55%, transparent); animation: arc-fade .45s var(--ease-out) both; }
+  .jv-think { animation: arc-breathe 1.4s ease-in-out infinite; }
+}
+@keyframes jv-drain { from { transform: scaleX(var(--jv-from, 1)); } to { transform: scaleX(0); } }
+/* Lenis (landing only) */
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+
+/* Jarvis core (landing): the HUD rings turn slowly, in opposite directions (2 Oct) */
+@keyframes jv-spin { to { transform: rotate(360deg); } }
+.jv-spin-slow { animation: jv-spin 90s linear infinite; transform-origin: 50% 50%; }
+.jv-spin-rev { animation: jv-spin 26s linear infinite reverse; transform-origin: 50% 50%; }
+@media (prefers-reduced-motion: reduce) { .jv-spin-slow, .jv-spin-rev { animation: none; } }
+/* landing panels over the brain map: dark glass, so map labels never show through */
+.jv-panel { background: color-mix(in srgb, var(--card) 94%, transparent) !important; -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border: 1px solid var(--line); box-shadow: var(--sh-lg); }
+
+
+/* ------------------------------------------------------------------ the landing scene ("Mission control")
+   12 Nov 2026, the owner: "landing page does not look as good as the older version, we need something really fancy".
+   The look he picked on 5 Oct, kept to the landing page: while it is open, <html data-scene="core"> carries the dark
+   sci-fi palette (so the page, the map, the Ask Jarvis pill and any dialog share it), whatever the Mac setting. Every
+   other screen follows the Mac setting as before. */
+:root[data-scene="core"] {
+  color-scheme: dark;
+  --canvas: #03070d; --card: #08111b; --card-2: #0b1621;
+  --ink: #eef4f8; --ink-2: #b9c8d2; --mute: #7d93a2;
+  --line: rgba(159,231,255,.085); --line-2: rgba(159,231,255,.05); --line-3: rgba(159,231,255,.17);
+  --chrome: #02060b; --chrome-2: #07101a; --chrome-ink: #eef4f8; --chrome-mute: #7d93a2; --lime: #9fe7ff;
+  --ion: #3fc8ff; --ion-2: #9fe7ff; --ion-3: #2aa6da; --ion-soft: rgba(63,200,255,.11);
+  --ok: #7cc9a0; --ok-soft: rgba(124,201,160,.12); --warn: #e8b04b; --warn-soft: rgba(232,176,75,.12);
+  --bad: #ff6b72; --bad-soft: rgba(255,107,114,.12); --info: #9fb9c8; --info-soft: rgba(159,185,200,.12);
+  --s-slack: #b69cff; --s-email: #7bb8f7; --s-teams: #93a4ff; --s-calendar: #e8b04b; --s-jira: #7bb8f7; --s-confluence: #5fd8e8; --s-bitbucket: #7aa7f5;
+  --s-meeting: #4fd1bd; --s-other: #8fa3b0; --s-jarvis: #3fc8ff;
+  --sh-xs: 0 1px 2px rgba(0,0,0,.3); --sh-sm: 0 1px 3px rgba(0,0,0,.35); --sh-md: 0 12px 28px -10px rgba(0,0,0,.6); --sh-lg: 0 30px 70px -24px rgba(0,0,0,.8);
+  --primary-foreground: #03121c;
+  --sh-card: inset 0 1px 0 rgba(255,255,255,.045), 0 18px 40px -28px rgba(0,0,0,.8);
+  --sh-card-hover: inset 0 1px 0 rgba(255,255,255,.07), 0 22px 46px -26px rgba(0,0,0,.9), 0 0 0 1px rgba(159,231,255,.12);
+  --skel-a: rgba(255,255,255,.04); --skel-b: rgba(255,255,255,.085);
+  --arc: #3fc8ff; --arc-hi: #9fe7ff; --arc-glow: rgba(63,200,255,.22);
+  --accent-red: #b3121d; --accent-gold: #e8b04b;
+  --ground: #03070d; --ground-2: #050c16;
+  --glass-ink: #eef4f8; --glass-ink-2: #b9c8d2; --glass-mute: #7d93a2;
+  --glass-bg: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.015));
+  --glass-border: linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.05) 40%, rgba(255,255,255,.02));
+  --glass-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 30px 60px -32px rgba(0,0,0,.75);
+}
+html[data-scene="core"], html[data-scene="core"] body { background: #010406; }
+:root[data-scene="core"] .glass-panel { position: relative; isolation: isolate; border: 0; border-radius: 18px; color: var(--glass-ink); background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(18px) saturate(140%); backdrop-filter: blur(18px) saturate(140%); box-shadow: var(--glass-shadow); }
+:root[data-scene="core"] .glass-panel::before { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none; background: var(--glass-border);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); }
+:root[data-scene="core"] .jv-panel { background: linear-gradient(180deg, rgba(6,18,26,.82), rgba(3,10,15,.86)) !important; -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+:root[data-scene="core"] .arc-title { background: linear-gradient(180deg, #fff 30%, #bfe8ff 95%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+/* the way in: one bright control, with a slow sheen */
+.btn-enter { min-height: 56px; padding: 0 32px; font-size: 16.5px; font-weight: 600; letter-spacing: .01em; overflow: hidden;
+  background: linear-gradient(180deg, rgba(46,98,146,.78), rgba(10,28,48,.9));
+  box-shadow: inset 0 0 0 1px rgba(159,231,255,.42), inset 0 1px 0 rgba(255,255,255,.2), inset 0 -16px 30px -12px rgba(63,200,255,.75),
+    0 0 36px -6px rgba(63,200,255,.6), 0 0 110px -18px rgba(63,200,255,.55);
+  transition: box-shadow .3s var(--ease-out), transform .3s var(--ease-out); }
+.btn-enter::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(105deg, transparent 36%, rgba(255,255,255,.26) 50%, transparent 64%); transform: translateX(-130%); animation: jv-sheen 4.6s ease-in-out infinite; }
+.btn-enter:hover { transform: translateY(-1px);
+  box-shadow: inset 0 0 0 1px rgba(159,231,255,.6), inset 0 1px 0 rgba(255,255,255,.26), inset 0 -18px 34px -12px rgba(63,200,255,.9),
+    0 0 46px -4px rgba(63,200,255,.8), 0 0 140px -16px rgba(63,200,255,.7); }
+@keyframes jv-sheen { 0%, 55% { transform: translateX(-130%); } 88%, 100% { transform: translateX(130%); } }
+/* slow light behind the map: three soft colours drifting */
+.jv-aurora { position: absolute; inset: -18%; pointer-events: none; opacity: .95; filter: blur(64px); mix-blend-mode: screen;
+  background: radial-gradient(40% 32% at 24% 30%, rgba(63,200,255,.34), transparent 70%), radial-gradient(36% 30% at 78% 68%, rgba(124,92,255,.30), transparent 70%),
+    radial-gradient(30% 26% at 64% 14%, rgba(54,226,195,.20), transparent 70%);
+  animation: jv-aurora 28s ease-in-out infinite alternate; }
+@keyframes jv-aurora { from { transform: translate3d(-3%, -2%, 0) rotate(0deg) scale(1); } to { transform: translate3d(3%, 2%, 0) rotate(9deg) scale(1.1); } }
+@media (prefers-reduced-motion: reduce) { .jv-aurora, .btn-enter::before { animation: none; } }
+
+/* the Portal landing (12 Nov): halo and sweeping rings round the core, the big greeting, the floor grid, the warp */
+.jv-par-1 { transform: translate3d(calc(var(--mx, 0) * -26px), calc(var(--my, 0) * -18px), 0); transition: transform .35s ease-out; }
+.jv-par-2 { transform: translate3d(calc(var(--mx, 0) * 10px), calc(var(--my, 0) * 7px), 0); transition: transform .35s ease-out; }
+.jv-halo { position: absolute; inset: -38%; border-radius: 50%; pointer-events: none; filter: blur(8px);
+  background: radial-gradient(closest-side, rgba(63,200,255,.36), rgba(63,200,255,.12) 46%, transparent 72%); animation: jv-halo 5.5s ease-in-out infinite; }
+@keyframes jv-halo { 0%, 100% { opacity: .65; transform: scale(.95); } 50% { opacity: 1; transform: scale(1.06); } }
+.jv-sweep { position: absolute; inset: -9%; border-radius: 50%; pointer-events: none;
+  background: conic-gradient(from 0deg, transparent 0 292deg, rgba(159,231,255,.75) 352deg, transparent 360deg);
+  -webkit-mask: radial-gradient(closest-side, transparent calc(100% - 2.5px), #000 calc(100% - 1.5px)); mask: radial-gradient(closest-side, transparent calc(100% - 2.5px), #000 calc(100% - 1.5px));
+  animation: jv-spin 7s linear infinite; }
+.jv-sweep.is-2 { inset: -22%; opacity: .55; animation-duration: 14s; animation-direction: reverse; }
+.jv-hero-title { font-size: clamp(38px, 6.2vw, 84px); line-height: 1.03; letter-spacing: -.035em; font-weight: 600;
+  background: linear-gradient(180deg, #ffffff 18%, #c6ecff 62%, #58c6ff 118%); -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 0 30px rgba(63,200,255,.3)); padding-bottom: .08em; }
+.jv-floor { position: absolute; left: -60%; right: -60%; bottom: -4%; height: 46%; pointer-events: none; opacity: .75; z-index: 5;
+  transform: perspective(640px) rotateX(66deg); transform-origin: 50% 100%;
+  background-image: linear-gradient(rgba(63,200,255,.28) 1px, transparent 1px), linear-gradient(90deg, rgba(63,200,255,.28) 1px, transparent 1px);
+  background-size: 68px 68px; animation: jv-floor 3.4s linear infinite;
+  -webkit-mask-image: linear-gradient(to top, #000 0%, rgba(0,0,0,.5) 38%, transparent 86%); mask-image: linear-gradient(to top, #000 0%, rgba(0,0,0,.5) 38%, transparent 86%); }
+@keyframes jv-floor { to { background-position: 0 68px, 0 0; } }
+.jv-stat { transition: transform .3s var(--ease-out), box-shadow .3s var(--ease-out); }
+.jv-stat:hover { transform: translateY(-3px); box-shadow: var(--glass-shadow), 0 0 0 1px rgba(159,231,255,.28), 0 0 40px -10px rgba(63,200,255,.55); }
+.jv-warp { position: fixed; inset: 0; z-index: 80; pointer-events: none; opacity: 0; transform: scale(.15);
+  background: radial-gradient(circle at 50% 42%, #f2fbff 0%, #8fdcff 16%, rgba(63,200,255,.35) 34%, rgba(4,18,27,0) 62%); }
+.jv-warp.is-on { animation: jv-warp .5s cubic-bezier(.6,0,.2,1) forwards; }
+@keyframes jv-warp { 0% { opacity: 0; transform: scale(.15); } 50% { opacity: 1; } 100% { opacity: 1; transform: scale(3.4); } }
+@media (prefers-reduced-motion: reduce) { .jv-halo, .jv-sweep, .jv-floor { animation: none; } .jv-par-1, .jv-par-2 { transform: none; } }
+
+/* entrance, in CSS */
+.jv-in { animation: jv-in .7s var(--ease-out) backwards; }
+.jv-d1 { animation-delay: .1s; } .jv-d2 { animation-delay: .18s; } .jv-d3 { animation-delay: .28s; } .jv-d4 { animation-delay: .4s; }
+@keyframes jv-in { from { opacity: 0; transform: translateY(14px); } }
+/* the way in: light from the core. Layers, back to front: streaks, bloom, two shockwave rings, then the app's own
+   background colour filling the window; .is-out fades the whole thing off the app. */
+.jv-warp2 { position: fixed; inset: 0; z-index: 200; pointer-events: none; overflow: hidden; }
+.jv-warp2 i { position: absolute; display: block; border-radius: 50%; left: var(--wx); top: var(--wy); will-change: transform, opacity; }
+.jv-warp2 .w-rays { width: 220vmax; height: 220vmax; margin: -110vmax 0 0 -110vmax; opacity: 0; mix-blend-mode: screen;
+  background: repeating-conic-gradient(from 0deg, rgba(200,240,255,0) 0deg 1.6deg, rgba(200,240,255,.62) 2deg 2.3deg, rgba(200,240,255,0) 2.7deg 5deg, rgba(140,215,255,.4) 5.3deg 5.5deg, rgba(200,240,255,0) 5.9deg 9deg);
+  -webkit-mask: radial-gradient(closest-side, transparent 5%, #000 20%, rgba(0,0,0,.5) 48%, transparent 72%); mask: radial-gradient(closest-side, transparent 5%, #000 20%, rgba(0,0,0,.5) 48%, transparent 72%);
+  animation: jv-w-rays .66s cubic-bezier(.3,0,.2,1) forwards; }
+@keyframes jv-w-rays { 0% { transform: scale(.22) rotate(0deg); opacity: 0; } 28% { opacity: 1; } 100% { transform: scale(1.5) rotate(16deg); opacity: 0; } }
+.jv-warp2 .w-bloom { width: 64vmax; height: 64vmax; margin: -32vmax 0 0 -32vmax; opacity: 0; mix-blend-mode: screen;
+  background: radial-gradient(closest-side, #ffffff 0%, #f1fbff 12%, #a9e4ff 28%, rgba(63,200,255,.6) 46%, rgba(63,200,255,.18) 62%, rgba(63,200,255,0) 76%);
+  animation: jv-w-bloom .64s cubic-bezier(.5,0,.2,1) forwards; }
+@keyframes jv-w-bloom { 0% { transform: scale(.04); opacity: 0; } 22% { opacity: 1; } 100% { transform: scale(4.4); opacity: 1; } }
+.jv-warp2 .w-ring { width: 44vmax; height: 44vmax; margin: -22vmax 0 0 -22vmax; opacity: 0; border: 2px solid rgba(224,247,255,.95);
+  box-shadow: 0 0 30px 6px rgba(63,200,255,.75), inset 0 0 30px 4px rgba(63,200,255,.5); animation: jv-w-ring .78s cubic-bezier(.15,.7,.2,1) forwards; }
+.jv-warp2 .w-ring.is-2 { border-width: 1px; animation-delay: .12s; animation-duration: .9s; }
+@keyframes jv-w-ring { 0% { transform: scale(.06); opacity: 0; } 14% { opacity: 1; } 100% { transform: scale(6.5); opacity: 0; } }
+.jv-warp2 .w-fill { inset: 0; left: 0; top: 0; border-radius: 0; background: var(--wfill); opacity: 0; animation: jv-w-fill .56s cubic-bezier(.55,0,.7,.6) forwards; }
+@keyframes jv-w-fill { 0%, 38% { opacity: 0; } 100% { opacity: 1; } }
+.jv-warp2.is-out { animation: jv-w-out .7s cubic-bezier(.16,1,.3,1) forwards; }
+@keyframes jv-w-out { to { opacity: 0; } }
+
+/* ---------- 13 Nov 2026: the feel layer (the owner: "make jarvis look and feel much better") ----------
+   A living backdrop (components/shell/Ambient.tsx) under every screen except the landing and Office; cards, the side
+   bar and the top bar let it through as frosted glass; a soft spotlight follows the cursor over a card; sections rise
+   in one after another when a page opens; buttons give a little when pressed. Reduced motion keeps all of it still. */
+:root { --amb-1: #2f6fe0; --amb-2: #12a8a0; --amb-3: #7c5cff; --amb-k: .24;
+  --glass-a: 74%; --glass-hi: rgba(255,255,255,.75); --spot: rgba(37,99,201,.10); --spot-line: rgba(37,99,201,.28); }
+:root[data-theme="dark"] { --amb-1: #3d7bff; --amb-2: #19c2b4; --amb-3: #8b6dff; --amb-k: .34;
+  --glass-a: 66%; --glass-hi: rgba(255,255,255,.06); --spot: rgba(106,168,255,.10); --spot-line: rgba(106,168,255,.35); }
+.jv-ambient { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; display: block; }
+.jv-shell { position: relative; z-index: 1; }
+@layer components {
+  :root:not([data-scene="core"]) .glass-card {
+    position: relative; isolation: isolate;
+    background: color-mix(in srgb, var(--card) var(--glass-a), transparent);
+    -webkit-backdrop-filter: blur(16px) saturate(150%); backdrop-filter: blur(16px) saturate(150%);
+    box-shadow: inset 0 1px 0 var(--glass-hi), var(--sh-card);
+    transition: box-shadow .25s ease, border-color .25s ease, translate .25s ease;
+  }
+  :root:not([data-scene="core"]) .glass-card::after {
+    content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 0;
+    background: radial-gradient(380px circle at var(--mx, 50%) var(--my, 0%), var(--spot), transparent 62%);
+    opacity: 0; transition: opacity .3s ease;
+  }
+  :root:not([data-scene="core"]) .glass-card:hover::after { opacity: 1; }
+  :root:not([data-scene="core"]) .glass-card:hover { border-color: color-mix(in srgb, var(--line-3) 60%, var(--spot-line)); }
+  :root:not([data-scene="core"]) .glass-card .glass-card:hover::after { opacity: 0; }
+  .jv-chrome { background: color-mix(in srgb, var(--chrome) 70%, transparent) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(160%); backdrop-filter: blur(20px) saturate(160%); }
+  .jv-rise > * > * { animation: jv-rise .55s cubic-bezier(.2,.7,.2,1) both; }
+  .jv-rise > * > *:nth-child(2) { animation-delay: .05s; } .jv-rise > * > *:nth-child(3) { animation-delay: .1s; }
+  .jv-rise > * > *:nth-child(4) { animation-delay: .15s; } .jv-rise > * > *:nth-child(5) { animation-delay: .2s; }
+  .jv-rise > * > *:nth-child(6) { animation-delay: .25s; } .jv-rise > * > *:nth-child(n+7) { animation-delay: .3s; }
+  button:not(:disabled):active, [role="button"]:active { transform: scale(.985); }
+}
+@keyframes jv-rise { from { opacity: 0; transform: translateY(10px); filter: blur(3px); } to { opacity: 1; transform: none; filter: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .jv-rise > * > * { animation: none; }
+  button:not(:disabled):active, [role="button"]:active { transform: none; }
+}
+
+/* 13 Nov: the landing's film layer (Landing.tsx): grain over the scene, a colour grade on the clip */
+.jv-film { }
+.jv-grain { opacity: .5; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .5  0 0 0 0 .5  0 0 0 0 .5  0 0 0 .55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  animation: jv-grain 1.2s steps(6) infinite; }
+@keyframes jv-grain { 0% { transform: translate(0,0) } 20% { transform: translate(-3%,2%) } 40% { transform: translate(2%,-3%) } 60% { transform: translate(-2%,-1%) } 80% { transform: translate(3%,3%) } 100% { transform: translate(0,0) } }
+@media (prefers-reduced-motion: reduce) { .jv-grain { animation: none; } }
+
+/* 13 Nov: the landing's assembly stage (Landing.tsx). The film and the still are shown whole (object-fit: contain) on a
+   ground sampled from the frame's own edges (top #0a0c0e, floor #2e3438), so letterbox bands disappear and nothing is
+   cropped (the provider's mark stays in view). */
+.jv-stage { background:
+  radial-gradient(80% 60% at 50% 46%, #1e2226 0%, rgba(30,34,38,0) 70%),
+  linear-gradient(180deg, #0a0c0e 0%, #0e1013 38%, #1b1f22 70%, #2c3236 100%); }
+.jv-lean { transform: translate3d(calc(var(--mx, 0) * -16px), calc(var(--my, 0) * -10px), 0) scale(var(--stage-k, 1)); transform-origin: 50% 100%;
+  transition: transform .9s cubic-bezier(.2,.7,.2,1); will-change: transform; }
+
+.jv-drift { animation: jv-drift 38s ease-in-out infinite alternate; transform-origin: 50% 64%; }
+@keyframes jv-drift { from { transform: scale(1); } to { transform: scale(1.05); } }
+.jv-stage-shade { background:
+  linear-gradient(180deg, rgba(4,6,8,.82) 0%, rgba(4,6,8,.55) 22%, rgba(4,6,8,0) 44%),
+  linear-gradient(0deg, rgba(4,6,8,.55) 0%, rgba(4,6,8,0) 22%); }
+@media (prefers-reduced-motion: reduce) { .jv-drift { animation: none; } .jv-lean { transform: none; } }
+.jv-stage-ext { transform: scale(1.12); transform-origin: 50% 70%; }
+
+/* 13 Nov: Today's day band (Today.tsx + landing/Assembly.tsx): a lit studio set into the page, dark in both themes */
+.jv-dayband { background: radial-gradient(70% 120% at 72% 60%, #23292e 0%, #121518 60%, #0b0d0f 100%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 18px 40px -22px rgba(4,8,12,.55); border: 1px solid rgba(255,255,255,.06); }
+.jv-dayband-fade { background: linear-gradient(90deg, #0b0d0f 0%, rgba(11,13,15,.92) 30%, rgba(11,13,15,.35) 52%, rgba(11,13,15,0) 68%); pointer-events: none; }
+@media (max-width: 700px) { .jv-dayband-fade { background: linear-gradient(90deg, rgba(11,13,15,.92) 0%, rgba(11,13,15,.6) 60%, rgba(11,13,15,.3) 100%); } }
+@media (max-aspect-ratio: 1/1) { .jv-stage-ext { display: none; } }
+/* while the film plays nothing blurs what is behind it (a backdrop blur over moving video is redone every frame) */
+[data-film="play"] * { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+
+/* 13 Nov: the interactive machine on Home (Landing.tsx): a 16:9 frame box (contain), hotspots on the machine's parts */
+.jv-frame { width: min(100vw, calc(100dvh * 16 / 9)); aspect-ratio: 16 / 9; }
+.jv-hot { position: absolute; transform: translate(-50%, -50%); width: 34px; height: 34px; border: 0; padding: 0; background: transparent; cursor: pointer; z-index: 2; }
+.jv-hot > i { position: absolute; inset: 11px; border-radius: 999px; background: #7fe3f2; box-shadow: 0 0 0 4px rgba(127,227,242,.18), 0 0 18px 4px rgba(127,227,242,.55); }
+.jv-hot > i::after { content: ""; position: absolute; inset: -9px; border-radius: 999px; border: 1px solid rgba(127,227,242,.55); animation: jv-hot-ping 2.6s ease-out infinite; }
+.jv-hot:focus-visible { outline: none; }
+.jv-hot:focus-visible > i, .jv-hot.is-on > i { background: #fff; box-shadow: 0 0 0 5px rgba(127,227,242,.3), 0 0 26px 8px rgba(127,227,242,.7); }
+.jv-hot-label { position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translate(-50%, 4px); white-space: nowrap; pointer-events: none;
+  padding: 7px 11px; border-radius: 10px; font: 500 12.5px/1.25 var(--f-body); color: #dfe8ee; text-align: left; opacity: 0;
+  background: rgba(8,12,16,.78); border: 1px solid rgba(127,227,242,.28); box-shadow: 0 10px 28px -12px rgba(0,0,0,.7);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); transition: opacity .2s ease, transform .2s ease; }
+.jv-hot-label b { display: block; font: 600 10px/1.3 var(--f-mono); letter-spacing: .18em; text-transform: uppercase; color: #8fe6f3; margin-bottom: 2px; }
+.jv-hot.is-on .jv-hot-label, .jv-hot:focus-visible .jv-hot-label { opacity: 1; transform: translate(-50%, 0); }
+@keyframes jv-hot-ping { 0% { transform: scale(.6); opacity: .9; } 80%, 100% { transform: scale(1.6); opacity: 0; } }
+[data-apart="1"] { cursor: grabbing; }
+@media (prefers-reduced-motion: reduce) { .jv-hot > i::after { animation: none; } }
+
+/* 13 Nov: screen headers set into a lit studio band (ArtBand in kit.tsx); light text inside, whatever the theme */
+.jv-artband { --ink: #f2f5f7; --ink-2: #c6d0d8; --mute: #93a1ac; --line: rgba(255,255,255,.12); --line-2: rgba(255,255,255,.08);
+  --line-3: rgba(255,255,255,.18); --card: rgba(255,255,255,.07); --card-2: rgba(255,255,255,.13);
+  background: radial-gradient(70% 120% at 72% 60%, #23292e 0%, #121518 60%, #0b0d0f 100%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 18px 40px -22px rgba(4,8,12,.55); border: 1px solid rgba(255,255,255,.06); }
+.jv-artband .jv-dayband-fade { z-index: 0; }
+/* the picture keeps its bottom right (the provider's mark) in every crop; only its left edge fades into the band.
+   .is-whole shows all of it, right-aligned, for a picture whose subject sits left of centre. */
+.jv-artband-img { object-position: 100% 100%; -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 34%); mask-image: linear-gradient(90deg, transparent 0%, #000 34%); }
+.jv-artband-img.is-whole { width: auto; aspect-ratio: 16 / 9; max-width: 100%; -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 16%); mask-image: linear-gradient(90deg, transparent 0%, #000 16%); }
+.jv-artband { min-height: 216px; display: flex; align-items: center; } .jv-artband > .relative { width: 100%; }
+@media (max-width: 700px) { .jv-artband-img { -webkit-mask-image: none; mask-image: none; } }
+
+/* 13 Nov: an empty state can show the finished machine at rest (Empty art= in components/ui/card.tsx) */
+.jv-empty-art { background: #0b0d0f; box-shadow: 0 14px 30px -18px rgba(4,8,12,.65), 0 0 0 1px rgba(255,255,255,.06); }
+
+/* 13 Nov: on the machine stage the four tiles sit over bright metal; a darker glass keeps their labels readable */
+:root[data-scene="core"] [data-film="still"] .jv-stat, :root[data-scene="core"] [data-film="play"] .jv-stat { background: rgba(7,10,13,.7); }
+:root[data-scene="core"] [data-film="still"] .jv-stat:hover { background: rgba(9,14,18,.8); }

@@ -1,0 +1,12 @@
+# Code only. A person's data lives in their own data folder (JARVIS_HOME), never here.
+__pycache__/
+*.pyc
+.DS_Store
+node_modules/
+web/.next/
+*.log
+
+# build caches
+*.tsbuildinfo
+web/next-env.d.ts.bak
+mac/build/

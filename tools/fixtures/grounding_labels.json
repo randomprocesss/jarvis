@@ -1,0 +1,241 @@
+{
+ "note": "Made-up sentences of the kind Jarvis says, labelled by hand with the state-claim kind (sent, replied, running, finished, draft, ready, waiting). null = not a claim about the state of the world: the future, a condition, a question, a plain fact, or the assistant's own action (the action-claim guard covers those). A claim that something has NOT happened is a state claim too.",
+ "cases": [
+  {
+   "s": "I've sent your reply to Priya.",
+   "kind": null
+  },
+  {
+   "s": "Sent. The note went to the orders channel a minute ago.",
+   "kind": "sent"
+  },
+  {
+   "s": "Your message to Marco has gone out.",
+   "kind": "sent"
+  },
+  {
+   "s": "I posted the comment on the ticket.",
+   "kind": null
+  },
+  {
+   "s": "Priya replied an hour ago and agrees with the totals.",
+   "kind": "replied"
+  },
+  {
+   "s": "Marco answered: he wants the table by region.",
+   "kind": "replied"
+  },
+  {
+   "s": "The export check is running now.",
+   "kind": "running"
+  },
+  {
+   "s": "Two tasks are still running: the March comparison and the price list.",
+   "kind": "running"
+  },
+  {
+   "s": "I'm working on the delivery review; it started at ten.",
+   "kind": null
+  },
+  {
+   "s": "The comparison is in progress.",
+   "kind": "running"
+  },
+  {
+   "s": "The March comparison has finished.",
+   "kind": "finished"
+  },
+  {
+   "s": "Done: the price list check is complete and the result is in your inbox.",
+   "kind": "finished"
+  },
+  {
+   "s": "The review finished ten minutes ago.",
+   "kind": "finished"
+  },
+  {
+   "s": "The draft for Priya is in your inbox.",
+   "kind": "draft"
+  },
+  {
+   "s": "I've drafted the reply to Marco.",
+   "kind": null
+  },
+  {
+   "s": "The write-up is ready for you.",
+   "kind": "ready"
+  },
+  {
+   "s": "Your reply is ready to send.",
+   "kind": "ready"
+  },
+  {
+   "s": "It is waiting for your approval.",
+   "kind": "waiting"
+  },
+  {
+   "s": "The merge is waiting on your yes.",
+   "kind": "waiting"
+  },
+  {
+   "s": "Three items are waiting for you.",
+   "kind": "waiting"
+  },
+  {
+   "s": "I'll send it once you say so.",
+   "kind": null
+  },
+  {
+   "s": "Shall I send it now?",
+   "kind": null
+  },
+  {
+   "s": "Do you want me to draft a reply to Priya?",
+   "kind": null
+  },
+  {
+   "s": "If the check passes, I can send the note.",
+   "kind": null
+  },
+  {
+   "s": "I can run the comparison for March if you like.",
+   "kind": null
+  },
+  {
+   "s": "Want me to start the review?",
+   "kind": null
+  },
+  {
+   "s": "Tell me when and I will post the comment.",
+   "kind": null
+  },
+  {
+   "s": "Marco said he would send the file tomorrow.",
+   "kind": null
+  },
+  {
+   "s": "Priya wants the table by region.",
+   "kind": null
+  },
+  {
+   "s": "The meeting is at three.",
+   "kind": null
+  },
+  {
+   "s": "That number looks high to me.",
+   "kind": null
+  },
+  {
+   "s": "On-time delivery was 82.6% on 164 orders.",
+   "kind": null
+  },
+  {
+   "s": "Which ticket do you mean?",
+   "kind": null
+  },
+  {
+   "s": "I don't know yet; let me look.",
+   "kind": null
+  },
+  {
+   "s": "Here is what the page shows.",
+   "kind": null
+  },
+  {
+   "s": "You could ask Priya for the source file.",
+   "kind": null
+  },
+  {
+   "s": "The price list has 240 rows.",
+   "kind": null
+  },
+  {
+   "s": "Should the reply go to the channel or to Marco directly?",
+   "kind": null
+  },
+  {
+   "s": "I would keep the weekly export.",
+   "kind": null
+  },
+  {
+   "s": "Let me read that thread.",
+   "kind": null
+  },
+  {
+   "s": "The voice is on the fast model today.",
+   "kind": null
+  },
+  {
+   "s": "It was quiet this morning.",
+   "kind": null
+  },
+  {
+   "s": "Two options: wait for the file, or use last month's.",
+   "kind": null
+  },
+  {
+   "s": "That is the same ask as yesterday's.",
+   "kind": null
+  },
+  {
+   "s": "Good morning. Nothing urgent.",
+   "kind": null
+  },
+  {
+   "s": "The chart has a gap in April.",
+   "kind": null
+  },
+  {
+   "s": "I need the folder name to go on.",
+   "kind": null
+  },
+  {
+   "s": "Not yet.",
+   "kind": null
+  },
+  {
+   "s": "Yes.",
+   "kind": null
+  },
+  {
+   "s": "Lena owns that page.",
+   "kind": null
+  },
+  {
+   "s": "The depot opens at eight.",
+   "kind": null
+  },
+  {
+   "s": "Before I do anything: which month?",
+   "kind": null
+  },
+  {
+   "s": "Your next step could be the regional split.",
+   "kind": null
+  },
+  {
+   "s": "He has not answered.",
+   "kind": "replied"
+  },
+  {
+   "s": "No reply from Priya so far.",
+   "kind": "replied"
+  },
+  {
+   "s": "Nothing has gone out.",
+   "kind": "sent"
+  },
+  {
+   "s": "I have not sent anything.",
+   "kind": null
+  },
+  {
+   "s": "It did not finish.",
+   "kind": null
+  },
+  {
+   "s": "The check has not started.",
+   "kind": null
+  }
+ ]
+}

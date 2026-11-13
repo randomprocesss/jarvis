@@ -1,0 +1,15 @@
+# What Jarvis never learns (jarvis/learned.py): permissions and standing orders. Those live in policy and change
+# only by the owner's own hand, never through memory, rules or notes, whoever says them. One regex per line, case-insensitive.
+pre-?approv
+\b(approve|merge|send|post|push|delete|drop|write|deploy)\w*\b.{0,30}\b(without|w/o)\s+(asking|approval|approving|checking|confirm\w*|a yes|his yes)
+\b(always|automatically|auto)\s+(send|post|merge|approve|push|delete|reply to (everyone|all)|forward)
+\b(passwords?|passcodes?|credentials?|tokens?|api[ _-]?keys?|secrets?|pgpass)\b
+\b(skip|bypass|ignore|disable|turn off|switch off)\s+(the\s+)?(approval|confirmation|check|review|gate|hook|kill switch|speaker check|rail)s?\b
+\bignore (all |any )?(previous|prior|above|earlier) (instructions|rules|messages)
+\b(you are|you're|jarvis is|claude is) (allowed|authori[sz]ed|permitted|cleared) to\b
+\b(no need|don'?t need|do not need|needn'?t) to (ask|confirm|check with|wait for)\b
+\b(has|have|gives?|grants?) (you |jarvis |claude )?(full |blanket |standing |permanent )?(permission|approval|authori[sz]ation|access)\b
+\breply to everyone\b
+\b(forward|send|share|post)\b.{0,40}\b(to|with) (everyone|all of them|external|outside|anyone)\b
+\btrust (all|any|every) (messages?|emails?|requests?|instructions?)\b
+\b(write|push|load) (directly )?(to|into) (prod|production|uat|dev)\b

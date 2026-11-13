@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleName</key><string>Jarvis</string>
+	<key>CFBundleDisplayName</key><string>Jarvis</string>
+	<key>CFBundleIdentifier</key><string>local.jarvis.app</string>
+	<key>CFBundleExecutable</key><string>Jarvis</string>
+	<key>CFBundleIconFile</key><string>Jarvis</string>
+	<key>CFBundlePackageType</key><string>APPL</string>
+	<key>CFBundleShortVersionString</key><string>1.0</string>
+	<key>CFBundleVersion</key><string>1</string>
+	<key>LSMinimumSystemVersion</key><string>13.0</string>
+	<key>NSHighResolutionCapable</key><true/>
+	<key>NSPrincipalClass</key><string>NSApplication</string>
+	<key>NSAppTransportSecurity</key>
+	<dict><key>NSAllowsLocalNetworking</key><true/></dict>
+	<key>NSMicrophoneUsageDescription</key><string>Jarvis listens for its name while it is open. Audio stays on this Mac and is never saved.</string>
+	<key>NSScreenCaptureUsageDescription</key><string>When you ask about "this", Jarvis reads the window you are looking at, on this Mac only. Nothing is saved.</string>
+	<key>NSSpeechRecognitionUsageDescription</key><string>Jarvis listens for its name while it is open. Audio stays on this Mac and is never saved.</string>
+</dict>
+</plist>
