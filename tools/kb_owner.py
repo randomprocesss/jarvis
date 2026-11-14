@@ -237,7 +237,7 @@ def build(which=('R3', 'R2', 'R1')):
         else:
             args.update(workstreams=_workstreams(('',)), decisions=_workstreams(('decisions-methods',))[:500_000],
                         memory=_memory({'project', 'reference', 'feedback'})[:500_000])
-        if not any(str(v).strip() for k, v in args.items() if k != 'rules' and '{' + k + '}' in tpl and v != '(none yet)'):
+        if not any(str(v).strip() for k, v in args.items() if k != 'rules' and '{' + k + '}' in tpl and v not in ('(none yet)', '{}')):
             K.log(f'owner: {key} {slug}: nothing to read yet; no note'); continue   # a note about nothing is not asked for
         prompt = tpl.format(**args)
         K.log(f'owner: {key} {slug}: {len(prompt) / 1e6:.2f} MB of material')

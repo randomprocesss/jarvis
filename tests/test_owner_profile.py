@@ -178,6 +178,7 @@ class Profile(Base):
     def test_nothing_to_read_asks_nothing_and_writes_no_note(self):
         self.assertIn('0 messages from 0 chats', self.tool('kb_owner.py', 'messages'))
         self.assertEqual(self.typed.read_text(), '')
+        (self.home / 'answers.json').write_text('{}')                     # as the server leaves it when the one answer is taken back
         out = self.tool('kb_owner.py', 'build')                           # all four notes, on a data home with no work in it yet
         self.assertEqual(self.prompts(), [])                              # a note about nothing is not paid for
         self.assertEqual(list(self.notes.iterdir()), [])                  # and not written
