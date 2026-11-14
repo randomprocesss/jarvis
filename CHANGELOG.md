@@ -3,7 +3,9 @@
 Each release is a git tag `vX.Y.Z` with the same number as the `VERSION` file. The app offers a release only when its
 tag is newer than the copy you run, and only updates on your press.
 
-## Unreleased
+## 0.1.0 (14 Nov 2026)
+
+The first release for other people to install.
 
 - Setup in the app: a new install opens on Setup; checks, suggestions, first learning pass.
 - Demo mode: a made-up person's week, in a separate Jarvis that sends nothing.
