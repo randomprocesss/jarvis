@@ -9,11 +9,17 @@ if a[:1] == ['--version']:
     print('9.9.9 (Claude Code)')
 elif a[:2] == ['auth', 'status']:
     print(json.dumps({'loggedIn': True, 'authMethod': 'claude.ai', 'subscriptionType': 'max', 'email': 'sam@example.com', 'orgName': 'Example Org'}))
+elif '--json-schema' in a:
+    sites = [{'id': '-'.join(['1a2b3c4d', '0000', '4000', '8000', '00000000abcd']), 'name': 'acme', 'url': 'https://acme.example.com'}]
+    print(json.dumps({'type': 'result', 'structured_output': {'sites': sites}, 'total_cost_usd': 0.01}))
 elif '-p' in a:
     print(json.dumps({'type': 'system', 'subtype': 'init', 'session_id': 's1', 'mcp_servers': [
         {'name': 'claude.ai Slack', 'status': 'connected'}, {'name': 'claude.ai Atlassian', 'status': 'needs-auth'}, {'name': 'notes', 'status': 'connected'}]}))
     print(json.dumps({'type': 'result', 'result': 'ready', 'is_error': False}))
 '''
+
+
+SITE = '-'.join(['1a2b3c4d', '0000', '4000', '8000', '00000000abcd'])      # made up; written in parts so it is no long id in the file
 
 
 class Setup(unittest.TestCase):
@@ -100,6 +106,15 @@ class Setup(unittest.TestCase):
         self.assertEqual(body['state']['next'], 'claude')
         self.assertEqual(self.config.load().get('work.hours'), '08:00-16:00')
 
+    def test_what_learning_reads_from_the_apps_is_named_on_setup(self):
+        src = self.step('sources')
+        self.assertEqual(src['reads']['values']['sources.tracker_projects'], [])
+        self.assertEqual(self.setup.save({'set': {'sources.since': 'last year'}})[1], 400)
+        body, code = self.setup.save({'set': {'sources.tracker_projects': ['ABC'], 'sources.channels': ['C0123ABCD orders-team'], 'sources.since': '2026-01-01'}})
+        self.assertEqual(code, 200)
+        r = self.step('sources', body['state'])['reads']
+        self.assertEqual((r['values']['sources.tracker_projects'], r['values']['sources.since'], r['site']), (['ABC'], '2026-01-01', ''))
+
     def test_the_check_proves_claude_answers_and_finds_the_connected_apps(self):
         body, code = self.setup.check({'what': 'claude'})
         self.assertEqual(code, 200)
@@ -115,6 +130,14 @@ class Setup(unittest.TestCase):
         ids = {s['id'] for s in st['suggestions']}
         self.assertNotIn('check', ids)
         self.assertIn('connect:atlassian', ids)
+
+    def test_the_atlassian_site_is_found_and_kept(self):
+        body, code = self.setup.find_site({})
+        self.assertEqual(code, 200, body)
+        self.assertEqual(body['chosen'], SITE)
+        c = self.config.load()
+        self.assertEqual((c.get('tracker.cloud_id'), c.get('links.ticket_base')), (SITE, 'https://acme.example.com/browse/'))
+        self.assertEqual(self.step('sources', body['state'])['reads']['site'], SITE)
 
     def test_learning_starts_only_when_there_is_something_to_learn_from(self):
         body, code = self.setup.learn({})

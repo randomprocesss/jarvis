@@ -128,6 +128,8 @@ def _check(key, value):
         raise ConfigError(f'{key} must be between 0 and 1')
     if key == 'engine.daily_cap_usd' and value < 0:
         raise ConfigError('engine.daily_cap_usd cannot be negative')
+    if key == 'sources.since' and value and not re.fullmatch(r'\d{4}-\d{2}-\d{2}', value):
+        raise ConfigError('sources.since must be a date like 2026-01-31, or empty')
     if key in ('owner.name', 'owner.address_as', 'work.about') and (len(value) > (200 if key == 'work.about' else 80) or '\n' in value):
         raise ConfigError(f'{key} must be one short line')
 

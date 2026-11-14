@@ -203,6 +203,15 @@ def apps():
     return {'on': on, 'checked': seen['at'], 'rows': rows, 'other': sorted(other)[:20]}
 
 
+def reads():
+    """What learning reads from the apps, as settings name it (tools/kb_live.py reads these)."""
+    c = config.load()
+    return {'site': str(c.get('tracker.cloud_id') or ''), 'values': {
+        'sources.tracker_projects': c.get('sources.tracker_projects') or [], 'sources.wiki_spaces': c.get('sources.wiki_spaces') or [],
+        'sources.channels': c.get('sources.channels') or [], 'sources.mail_terms': c.get('sources.mail_terms') or [],
+        'sources.since': str(c.get('sources.since') or '')}}
+
+
 # ---------------------------------------------------------------- chats and folders
 def _chat_dirs():
     """[(folder name, number of chats, newest change)] of Claude Code's chat folders, without Jarvis's own runs."""
@@ -472,7 +481,7 @@ def steps():
              (', '.join(r['label'] for r in ap['rows'] if r['state'] == 'connected') + ' connected.') if any_app else
              ('apps connected to a Claude account are out of reach with an API key.' if ap.get('api_key') else
               'no app checked yet.' if ap['checked'] is None else 'no app connected.')),
-         'chats': ch, 'apps': ap},
+         'chats': ch, 'apps': ap, 'reads': reads()},
         {'id': 'folders', 'title': 'Folders', 'done': any(r['ok'] for r in fo['rows']),
          'status': (f"{sum(1 for r in fo['rows'] if r['ok'])} work folder(s); {ch['in_scope']} chats were held in them." if fo['rows'] else
                     'Name the folders that hold your work: Jarvis reads the chats held there and writes its work beside them.'),
@@ -550,6 +559,42 @@ def key(b):
         return {'ok': False, 'error': str(e)}, 400
     forget()
     return {'ok': True, 'where': keystore.where(), 'state': state()}, 200
+
+
+def find_site(b=None):
+    """Find the owner's Atlassian site through the app connected to their Claude account (one small run, read-only), and
+    keep its id in settings (tracker.cloud_id): the ticket and page readers need it."""
+    exe = paths.claude_bin()
+    if not exe:
+        return {'ok': False, 'error': claude().get('fix', 'Claude Code was not found.')}, 400
+    if config.load().get('engine.mode') == 'api-key':
+        return {'ok': False, 'error': 'With an API key, the apps connected to a Claude account are out of reach.'}, 400
+    paths.ensure()
+    tool = 'mcp__claude_ai_Atlassian_Rovo__getAccessibleAtlassianResources'
+    schema = {'type': 'object', 'properties': {'sites': {'type': 'array', 'items': {'type': 'object', 'properties': {
+        'id': {'type': 'string'}, 'name': {'type': 'string'}, 'url': {'type': 'string'}}, 'required': ['id']}}}, 'required': ['sites']}
+    prompt = (f'Call the tool {tool} once, with no arguments. Return every site it lists, copying each id, name and url exactly '
+              'as the tool gave them. If the tool is not available or fails, return an empty list.')
+    try:
+        p = subprocess.run([exe, '-p', prompt, '--model', config.model('quick'), '--output-format', 'json', '--json-schema', json.dumps(schema),
+                            '--allowedTools', tool, '--max-turns', '4'], capture_output=True, text=True, timeout=240, cwd=str(paths.home()),
+                           env=dict(os.environ, **MCP_ENV), stdin=subprocess.DEVNULL)
+        d = json.loads(p.stdout or '{}')
+    except (OSError, ValueError, subprocess.SubprocessError) as e:
+        return {'ok': False, 'error': f'The search did not finish ({e.__class__.__name__}).'}, 500
+    sites = [s for s in ((d.get('structured_output') or {}).get('sites') or []) if isinstance(s, dict)
+             and re.fullmatch(r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}', str(s.get('id', '')))]
+    if not sites:
+        return {'ok': False, 'error': 'No Atlassian site was found. Connect Atlassian in Claude, then try again.'}, 404
+    pick = str((b or {}).get('id') or '')
+    chosen = next((s for s in sites if s['id'] == pick), sites[0] if len(sites) == 1 else None)
+    if chosen:
+        config.set('tracker.cloud_id', chosen['id'])
+        if chosen.get('url') and not config.load().get('links.ticket_base'):
+            config.set('links.ticket_base', str(chosen['url']).rstrip('/') + '/browse/')
+        forget()
+    return {'ok': True, 'sites': [{'id': s['id'], 'name': str(s.get('name') or '')[:80], 'url': str(s.get('url') or '')[:120]} for s in sites],
+            'chosen': chosen['id'] if chosen else '', 'state': state()}, 200
 
 
 def check(b):

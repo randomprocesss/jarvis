@@ -34,7 +34,7 @@ def load_page_key():
         pass
     return bool(PAGE_KEY)
 TIER = {'/api/demo_start': 'T1', '/api/demo_leave': 'T1', '/api/export': 'T1', '/api/erase': 'T1', '/api/update': 'T1',
-        '/api/setup_save': 'T1', '/api/setup_key': 'T1', '/api/setup_check': 'T1', '/api/setup_dismiss': 'T1', '/api/setup_learn': 'T1',      # the owner's own settings, from the Setup screen
+        '/api/setup_save': 'T1', '/api/setup_key': 'T1', '/api/setup_find_site': 'T1', '/api/setup_check': 'T1', '/api/setup_dismiss': 'T1', '/api/setup_learn': 'T1',      # the owner's own settings, from the Setup screen
         '/api/inbox_tick': 'T1', '/api/answer': 'T1', '/api/jarvis_task': 'T1', '/api/run_now': 'T1', '/api/tickets_save': 'T1',
         '/api/consult_done': 'T1', '/api/reminder_done': 'T1', '/api/jarvis_drop': 'T1', '/api/jarvis_model': 'T1',
         '/api/open_output': 'T1',
@@ -46,7 +46,7 @@ TIER = {'/api/demo_start': 'T1', '/api/demo_leave': 'T1', '/api/export': 'T1', '
         # safe direction and work from any local page
         '/api/ladder_raise': 'T2', '/api/ladder_lower': 'T1', '/api/held_stop': 'T1'}
 # In the demo these would start a run or reach outside it: refused there, whatever their tier.
-DEMO_REFUSED = {'/api/setup_key', '/api/run_now', '/api/jarvis_task', '/api/setup_learn', '/api/setup_check', '/api/setup_save', '/api/research', '/api/export',
+DEMO_REFUSED = {'/api/setup_key', '/api/setup_find_site', '/api/run_now', '/api/jarvis_task', '/api/setup_learn', '/api/setup_check', '/api/setup_save', '/api/research', '/api/export',
                 '/api/erase', '/api/update', '/api/demo_start', '/api/share_file', '/api/watch'}
 QUIET = {'/api/jarvis_drop', '/api/consult_done', '/api/reminder_done', '/api/jarvis_prewarm'}   # too chatty to record
 _recent, _lock = {}, threading.Lock()

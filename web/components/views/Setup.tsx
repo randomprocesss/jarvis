@@ -173,6 +173,7 @@ export default function SetupView() {
           ))}
         </div>
         {src.apps.other.length > 0 && <p className="mb-0 mt-3 text-[13px] text-mute">Also connected to your Claude account, and not read by Jarvis: {src.apps.other.join(", ")}.</p>}
+        {src.apps.on && !src.apps.api_key && <Reads r={src.reads} busy={busy} save={save} setSt={setSt} />}
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <Button size="sm" disabled={!!busy} onClick={() => save({ "sources.claude_connectors": !src.apps.on }, src.apps.on ? "Your connected apps are no longer read." : "Your connected apps are read.")}>{src.apps.on ? "Stop reading my connected apps" : "Read my connected apps"}</Button>
           <span className="text-[13px] text-mute">Apps are connected in Claude itself, never here. Jarvis only reads through them; anything it would send waits for your press.{src.apps.checked ? " Last checked " + when(src.apps.checked) + "." : ""}</span>
@@ -370,6 +371,51 @@ function ApiKey({ has, where, canStore, onDone }: { has: boolean; where: string;
           <Button type="submit" disabled={busy || !k.trim()}>{has ? "Replace the key" : "Keep the key"}</Button>
           {has && <Button type="button" variant="ghost" disabled={busy} onClick={() => save({ remove: true }, "The key was removed.")}>Remove it</Button>}
         </form>
+      )}
+    </div>
+  );
+}
+
+/** What learning reads from the apps. Nothing is read until something is named here. */
+function Reads({ r, busy, save, setSt }: { r: any; busy: string; save: (v: Record<string, any>, done?: string) => Promise<boolean>; setSt: (s: any) => void }) {
+  const list = (v: any) => (Array.isArray(v) ? v.join(", ") : String(v || ""));
+  const lines = (v: any) => (Array.isArray(v) ? v.join("\n") : String(v || ""));
+  const [f, setF] = useState(() => ({ t: list(r.values["sources.tracker_projects"]), w: list(r.values["sources.wiki_spaces"]),
+    c: lines(r.values["sources.channels"]), m: list(r.values["sources.mail_terms"]), s: r.values["sources.since"] || "" }));
+  const [sites, setSites] = useState<any[]>([]), [finding, setFinding] = useState(false);
+  const split = (s: string) => s.split(",").map((x) => x.trim()).filter(Boolean);
+  const find = async (id?: string) => {
+    setFinding(true);
+    const x = await WH.api("/api/setup_find_site", id ? { id } : {}).catch(() => ({ error: "Jarvis is not answering" }));
+    setFinding(false);
+    if (x && x.ok) { setSites(x.sites || []); if (x.state) setSt(x.state); WH.toast(x.chosen ? "Your Atlassian site is set." : "Pick your site below.", "ok"); }
+    else WH.toast((x && x.error) || "No site was found.", "err", 8000);
+  };
+  const field = "w-full rounded-md border border-line bg-transparent px-3 py-1.5 text-[13.5px] text-ink outline-none focus:border-ion";
+  const lab = "mb-1 block text-[12.5px] font-medium text-mute";
+  return (
+    <div className="mt-4 grid gap-3 rounded-[10px] border border-line px-4 py-3" data-setup-reads>
+      <b className="text-[14px] text-ink">What learning reads from your apps</b>
+      <p className="m-0 text-[13px] text-mute">Nothing is read from the apps until it is named here. Every night Jarvis reads what changed and adds it to your knowledge base.</p>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-3 max-[640px]:grid-cols-1">
+        <label className="block"><span className={lab}>Ticket projects (their keys)</span><input className={field} value={f.t} onChange={(e) => setF({ ...f, t: e.target.value })} placeholder="ABC, OPS" /></label>
+        <label className="block"><span className={lab}>Wiki spaces (their keys)</span><input className={field} value={f.w} onChange={(e) => setF({ ...f, w: e.target.value })} placeholder="DOCS" /></label>
+        <label className="col-span-full block"><span className={lab}>Chat channels: one per line, the channel id then its name</span>
+          <textarea className={field + " min-h-[64px] font-mono"} value={f.c} onChange={(e) => setF({ ...f, c: e.target.value })} placeholder="C0123ABCD orders-team" /></label>
+        <label className="block"><span className={lab}>Words that mark work mail and meetings</span><input className={field} value={f.m} onChange={(e) => setF({ ...f, m: e.target.value })} placeholder="orders, deliveries" /></label>
+        <label className="block"><span className={lab}>Read back to (a date)</span><input className={field} value={f.s} onChange={(e) => setF({ ...f, s: e.target.value })} placeholder="twelve months back if empty" /></label>
+      </div>
+      <div className="flex flex-wrap items-center gap-3">
+        <Button size="sm" disabled={!!busy} onClick={() => save({ "sources.tracker_projects": split(f.t).map((x) => x.toUpperCase()), "sources.wiki_spaces": split(f.w),
+          "sources.channels": f.c.split("\n").map((x) => x.trim()).filter(Boolean), "sources.mail_terms": split(f.m), "sources.since": f.s.trim() }, "Saved. Tonight's update reads them.")}>Save</Button>
+        <span className="text-[13px] text-mute">Tickets and wiki pages need your Atlassian site: {r.site ? <span className="text-ok">set</span> : "not set yet"}.</span>
+        <Button size="sm" variant="ghost" disabled={finding || !!busy} onClick={() => find()}>{finding ? "Looking…" : r.site ? "Find it again" : "Find my site"}</Button>
+      </div>
+      {sites.length > 1 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[13px] text-mute">Which site is your work?</span>
+          {sites.map((s) => <Button key={s.id} size="sm" variant={s.id === r.site ? "primary" : "default"} disabled={finding} onClick={() => find(s.id)}>{s.name || s.url}</Button>)}
+        </div>
       )}
     </div>
   );

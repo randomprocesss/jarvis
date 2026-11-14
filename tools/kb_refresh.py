@@ -249,6 +249,56 @@ def _pending(topics, notes, filing):
 FOLD_IN_CODE = True                                       # False: the older whole-note rewrite below
 
 
+APP_NOTES = os.path.join(HUB, 'brain', 'sources')   # notes of what was read from the apps (tools/kb_extra.py notes())
+
+
+def note_path(i):
+    """A note of the night: from a chat (brain/sessions) or from an app (brain/sources)."""
+    p = os.path.join(SESSIONS, i + '.md')
+    return p if os.path.exists(p) else os.path.join(APP_NOTES, i + '.md')
+
+
+def apps_to_read():
+    """What the night reads from the apps, by settings: [] when nothing is named, when the apps are not read at all
+    (sources.claude_connectors off), or with an API key (the apps connected to a Claude account are out of its reach)."""
+    c = config.load()
+    if not c.get('sources.claude_connectors') or c.get('engine.mode') == 'api-key':
+        return []
+    import kb_live as L
+    out = []
+    if L.cloud() and L.projects():
+        out.append('tickets')
+    if L.spaces():
+        out.append('pages')
+    if L.channels():
+        out.append('channels')
+    if c.has('microsoft') and L.mail_terms():
+        out.append('mail')
+    return out
+
+
+def apps_step(K, budget):
+    """Read what changed in the apps since the last time (kb_live_delta), then write a note for each new unit (kb_extra).
+    Returns the new notes' names. Skipped when nothing is named, or when the night's allowance is nearly spent."""
+    what = apps_to_read()
+    if not what:
+        return []
+    if budget < 2.0:
+        K.log(f'refresh: apps not read tonight (allowance left ${budget:.2f})')
+        return []
+    import kb_live_delta as LD, kb_extra as X
+    K.log('refresh: reading the apps: ' + ', '.join(what))
+    try:
+        LD.run(LD._default_since())
+    except K.WeekLine:
+        raise
+    except Exception as e:
+        K.log(f'refresh: reading the apps failed ({e.__class__.__name__}: {str(e)[:120]}); what was read is kept')
+    ids = X.notes(3, K.WEEK_MAX)
+    K.log(f'refresh: {len(ids)} notes from the apps')
+    return ids
+
+
 def refresh_topics(new_ids, K, budget, keep=None):
     """Rewrites each workstream note with the new notes filed under it that it does not cite yet. Resumable anywhere: the
     filing is saved (state/topics_filing.json) and a folded-in note is in the workstream's sources (22 Oct: the 21 Oct
@@ -259,7 +309,7 @@ def refresh_topics(new_ids, K, budget, keep=None):
         return budget
     topics = [t for t in json.load(open(mp)) if not t.get('parent')]   # 24 Oct: file under workstreams; the fold places sub-note facts
     ws = '\n'.join(f"{t['slug']} | {t['title']} | {t.get('scope', '')[:200]}" for t in topics)
-    notes = {i: open(os.path.join(SESSIONS, i + '.md'), errors='replace').read() for i in new_ids if os.path.exists(os.path.join(SESSIONS, i + '.md'))}
+    notes = {i: open(note_path(i), errors='replace').read() for i in new_ids if os.path.exists(note_path(i))}
     filing, budget = _filing(notes, ws, K, budget)
     by = _pending(topics, notes, filing)
     path = lambda t: os.path.join(KB, 'topics', re.sub(r'[^a-z0-9-]', '', t['slug'].lower())[:60] + '.md')
@@ -481,13 +531,17 @@ def run(dry=False):
         lg = open(K.LOG).read().splitlines()[-2000:]       # 16 Oct: only this run's batches (from its own start line)
         st0 = max((i for i, l in enumerate(lg) if f'-> {hi} (' in l and '(dry)' not in l), default=len(lg))
         spent = sum(float(x) for l in lg[st0:] if ' batch ' in l for x in re.findall(r'\$(\d+\.\d+)', l))
+        new_ids = new_ids + apps_step(K, budget - spent)        # 14 Nov: the apps too, as settings name them
+        K.SRC, K.OUT, K.STARTED = NEW, SESSIONS, os.path.join(NEW, '.none')
         budget = refresh_topics(new_ids, K, budget - spent)
     except K.WeekLine:
         left, new_ids = ['stopped at the week line'], []
     try:                                                   # 16 Oct: each new note through the personal filter too
         import personal_deep_check as P
         for i in new_ids:
-            p = os.path.join(SESSIONS, i + '.md')
+            p = note_path(i)
+            if not os.path.exists(p):
+                continue
             t = open(p, errors='replace').read()
             ft = P.filter_text(t)
             cut = len(t.split('\n')) - len(ft.split('\n'))

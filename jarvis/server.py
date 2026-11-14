@@ -1035,10 +1035,10 @@ def post(path, b):
         p = _product()
         return {'/api/demo_start': p.demo_start, '/api/demo_leave': p.demo_leave, '/api/export': p.export, '/api/erase': p.erase,
                 '/api/update': p.update}[path](b)
-    if path in ('/api/setup_save', '/api/setup_check', '/api/setup_dismiss', '/api/setup_learn', '/api/setup_key'):       # the Setup screen (jarvis/setup.py)
+    if path in ('/api/setup_save', '/api/setup_check', '/api/setup_dismiss', '/api/setup_learn', '/api/setup_key', '/api/setup_find_site'):       # the Setup screen (jarvis/setup.py)
         s = _setup()
         return {'/api/setup_save': s.save, '/api/setup_check': s.check, '/api/setup_dismiss': s.dismiss, '/api/setup_learn': s.learn,
-                '/api/setup_key': s.key}[path](b)
+                '/api/setup_key': s.key, '/api/setup_find_site': s.find_site}[path](b)
     if path == '/api/jarvis_task':
         return assistant.task(b), 200
     if path == '/api/jarvis_model':                       # the model switcher (voice set_model or the landing picker)

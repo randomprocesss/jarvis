@@ -17,8 +17,10 @@ to or sent.
 
 ## The knowledge base
 
-Learning reads your chats and documents. What it reads from the apps is chosen in settings, and with nothing chosen,
-nothing is read from them:
+Learning reads your chats and documents. What it reads from the apps is chosen on **Setup > Sources > What learning
+reads from your apps** (or in settings), and with nothing chosen, nothing is read from them. Every night Jarvis reads
+what changed there since the night before. Tickets and wiki pages need your Atlassian site: **Find my site** looks it
+up through the app connected to your Claude account.
 
 | Setting | What is read |
 |---|---|

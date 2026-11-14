@@ -374,6 +374,26 @@ def run(lanes=5, after=None, week=None):           # 16 Oct: his line in kb_buil
         return
 
 
+
+def notes(lanes=3, week=None):
+    """The nightly step for what was read from the apps (tools/kb_live_delta.py): a note for each unit in sources_extra that
+    has none yet. No screenshots here. Returns the names of the new notes (in brain/sources)."""
+    import kb_build as K
+    os.makedirs(SOURCES, exist_ok=True)
+    have = lambda: {f[:-3] for f in os.listdir(SOURCES) if f.endswith('.md')}
+    before = have()
+    saved = (K.SRC, K.OUT, K.STARTED, K.PROMPT, K.WEEK_MAX)
+    K.SRC, K.OUT, K.STARTED, K.PROMPT = EXTRA, SOURCES, os.path.join(EXTRA, '.none'), PROMPT
+    if week is not None:
+        K.WEEK_MAX = week
+    try:
+        if os.path.isdir(EXTRA):
+            K.sessions(lanes)
+    finally:
+        K.SRC, K.OUT, K.STARTED, K.PROMPT, K.WEEK_MAX = saved
+    return sorted(have() - before)
+
+
 if __name__ == '__main__':
     a = sys.argv[1:]
     if a and a[0] == 'build':
