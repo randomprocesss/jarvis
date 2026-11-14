@@ -25,6 +25,10 @@ On a Mac or on Linux:
 It checks what Jarvis needs, adds a `jarvis` command, starts Jarvis and opens it in your browser. It uses no sudo,
 downloads nothing and changes nothing outside your data folder (`~/.jarvis`) and one small file, `~/.local/bin/jarvis`.
 
+On Windows: `powershell -ExecutionPolicy Bypass -File install.ps1`. Jarvis runs there in the browser (the Mac app, voice
+and phone reminders are Mac-only). The Windows installer has not yet been tried on a Windows computer; if a step
+fails, `python -m jarvis doctor` in the Jarvis folder says what is missing.
+
 ## 3. Set it up in the app
 
 Jarvis opens on its Setup page. Everything is done there:
@@ -41,6 +45,20 @@ suggestion by itself.
 
 Want to look around first? Press **Look around first** on the Setup page, or run `jarvis demo`: a made-up person's
 week, where nothing is real and nothing is sent.
+
+## With an API key instead of a Claude plan
+
+On Setup, under **Budget**, choose "An API key (paid per use)" and a daily limit in dollars. Then, under **Claude**,
+paste your key: it goes to your macOS Keychain (or the Secret Service on Linux), never into a file, and is never shown
+again. On a computer without a password store, set `ANTHROPIC_API_KEY` in your environment instead.
+
+What changes with a key:
+
+- **The limit.** Claude Code reports what each run cost; Jarvis adds them up per day. Background work waits as the day's
+  spend nears your limit (inbox work at 85% of it, Jarvis's own checks at 60%). Work you ask for is never held back.
+- **The apps.** The ready-made app connections (Slack, Jira, Outlook, ...) belong to a Claude account, so a key alone
+  cannot reach them. Each app needs its own tool server: name the file that lists them in the `sources.mcp_config`
+  setting, and their read tools in `sources.read_tools`. Setup says this under **Sources**.
 
 ## Every day
 
@@ -67,3 +85,9 @@ The browser is enough. On a Mac there is also a small app with a menu-bar icon, 
 `mac/build.sh` (it installs to `~/Applications/Jarvis.app`). The wake word ("Hey Jarvis") needs five small open models,
 about 15 MB: `python3 voice/setup.py` fetches them after asking. Without them the app listens when you press and speaks
 with the Mac's own voice.
+
+## More
+
+[SAFETY.md](SAFETY.md) what Jarvis may do on its own · [PRIVACY.md](PRIVACY.md) where your data is and what is kept out ·
+[HOW-IT-LEARNS.md](HOW-IT-LEARNS.md) · [SOURCES.md](SOURCES.md) what it reads · [CONFIG.md](CONFIG.md) every setting ·
+[ARCHITECTURE.md](ARCHITECTURE.md) · [TROUBLESHOOTING.md](TROUBLESHOOTING.md)

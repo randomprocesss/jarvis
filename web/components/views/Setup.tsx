@@ -144,10 +144,12 @@ export default function SetupView() {
       <Step s={cl} n={2} open={st.next === "claude"}>
         <div className="flex flex-wrap items-center gap-2">
           <Chip tone={c.found ? "ok" : "bad"}>{c.found ? "Claude Code " + (c.version || "found") : "Claude Code not found"}</Chip>
-          {c.found && <Chip tone={c.signed_in ? "ok" : c.unknown ? "mute" : "bad"}>{c.signed_in ? "signed in" + (c.plan ? " · " + c.plan + " plan" : "") : c.unknown ? "sign-in not known" : "not signed in"}</Chip>}
+          {c.found && !c.key && <Chip tone={c.signed_in ? "ok" : c.unknown ? "mute" : "bad"}>{c.signed_in ? "signed in" + (c.plan ? " · " + c.plan + " plan" : "") : c.unknown ? "sign-in not known" : "not signed in"}</Chip>}
+          {c.found && c.key && <Chip tone={c.signed_in ? "ok" : "bad"}>{c.signed_in ? "API key kept" : "no API key yet"}</Chip>}
           {c.test && <Chip tone={c.test.ok ? "ok" : "bad"}>{c.test.ok ? "answered " + when(c.test.at) : "last check failed"}</Chip>}
         </div>
         {c.test && !c.test.ok && c.test.error && <div className="mt-3"><Note tone="warn">{c.test.error}</Note></div>}
+        {c.key && <ApiKey has={!!c.signed_in} where={c.key_where} canStore={!!c.key_store} onDone={(s: any) => s && setSt(s)} />}
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <Button variant={cl.done ? "default" : "primary"} busy={busy === "check"} disabled={!!busy || !c.found} onClick={check}>{cl.done ? "Check again" : "Check Claude and my apps"}</Button>
           <span className="text-[13px] text-mute">One short Claude run: it shows that Claude answers and which of your apps are connected. It can take up to a minute.</span>
@@ -345,5 +347,30 @@ function Privacy({ busy: pageBusy }: { busy: string }) {
         )}
       </Panel>
     </section>
+  );
+}
+
+/** The owner's API key, when Claude is paid for per use. The key goes to the system's password store; it is never shown
+    again, never kept in a file of Jarvis's and never logged. */
+function ApiKey({ has, where, canStore, onDone }: { has: boolean; where: string; canStore: boolean; onDone: (s: any) => void }) {
+  const [k, setK] = useState(""), [busy, setBusy] = useState(false);
+  const save = async (body: any, done: string) => {
+    setBusy(true);
+    const r = await WH.api("/api/setup_key", body).catch(() => ({ error: "Jarvis is not answering" }));
+    setBusy(false); setK("");
+    if (r && r.ok) { WH.toast(done, "ok", 6000); onDone(r.state); } else WH.toast((r && r.error) || "Nothing was saved.", "err", 8000);
+  };
+  return (
+    <div className="mt-3 grid gap-2" data-api-key>
+      <p className="m-0 text-[13px] text-mute">{has ? `Your key is kept in ${where}.` : canStore ? `Your key will be kept in ${where.split(":")[0]}. It is never shown again and never written to a file.` : where}</p>
+      {canStore && (
+        <form className="flex flex-wrap items-center gap-3" onSubmit={(e) => { e.preventDefault(); if (k.trim()) save({ key: k.trim() }, "The key is kept. Press Check to see Claude answer."); }}>
+          <input type="password" autoComplete="off" spellCheck={false} className="w-[340px] max-w-full rounded-md border border-line bg-transparent px-3 py-1.5 font-mono text-[13px] text-ink outline-none focus:border-ion"
+            value={k} onChange={(e) => setK(e.target.value)} placeholder={has ? "paste a new key to replace it" : "sk-ant-..."} aria-label="Anthropic API key" />
+          <Button type="submit" disabled={busy || !k.trim()}>{has ? "Replace the key" : "Keep the key"}</Button>
+          {has && <Button type="button" variant="ghost" disabled={busy} onClick={() => save({ remove: true }, "The key was removed.")}>Remove it</Button>}
+        </form>
+      )}
+    </div>
   );
 }

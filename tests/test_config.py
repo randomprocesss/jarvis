@@ -30,14 +30,14 @@ class Settings(unittest.TestCase):
         config.set('owner.name', 'Sam "the quick" Lee — ñ')
         config.set('work.folders', ['~/Documents/Atlas', 'C:\\Work\\Notes'])
         config.set('engine.daily_cap_usd', 2.5)
-        config.set('modules.voice', True)
+        config.set('modules.vault', True)
         cfg = config.load()
         self.assertTrue(cfg.is_set_up())
         self.assertEqual(cfg.owner(), 'Sam "the quick" Lee — ñ')
         self.assertEqual(cfg.address_as(), 'Sam')
         self.assertEqual(cfg.get('work.folders'), ['~/Documents/Atlas', 'C:\\Work\\Notes'])
         self.assertEqual(cfg.get('engine.daily_cap_usd'), 2.5)
-        self.assertIs(cfg.get('modules.voice'), True)
+        self.assertIs(cfg.get('modules.vault'), True)
         self.assertEqual(cfg.get('work.quiet'), '22:30-07:00')                # untouched settings keep their defaults
 
     def test_address_as_wins_over_first_name(self):
@@ -46,7 +46,7 @@ class Settings(unittest.TestCase):
 
     def test_bad_values_are_refused_and_nothing_is_written(self):
         for key, value in [('engine.mode', 'free'), ('work.hours', '7am-10pm'), ('work.days', 'weekdays'), ('server.port', 80),
-                           ('server.port', '8765'), ('modules.voice', 'yes'), ('work.folders', 'one'), ('owner.name', 'a\nb'),
+                           ('server.port', '8765'), ('modules.vault', 'yes'), ('work.folders', 'one'), ('owner.name', 'a\nb'),
                            ('engine.background_share', 1.5), ('engine.daily_cap_usd', -1), ('ownername', 'x')]:
             with self.assertRaises(config.ConfigError, msg=f'{key}={value!r}'):
                 config.set(key, value)

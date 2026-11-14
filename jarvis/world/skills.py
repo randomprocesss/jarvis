@@ -193,7 +193,7 @@ def _used_since(name, since_ts):
     """Did any Claude session on this Mac invoke the skill since then (its transcripts record the Skill call)?"""
     import glob
     needle = f'"skill":"{name}"'
-    for f in glob.glob(os.path.expanduser('~/.claude/projects/*/*.jsonl')):
+    for f in glob.glob(os.path.join(str(paths.claude_chats()), '*', '*.jsonl')):
         try:
             if os.path.getmtime(f) >= since_ts and needle in open(f, errors='ignore').read().replace('": "', '":"'):
                 return True

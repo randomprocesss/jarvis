@@ -34,7 +34,7 @@ def load_page_key():
         pass
     return bool(PAGE_KEY)
 TIER = {'/api/demo_start': 'T1', '/api/demo_leave': 'T1', '/api/export': 'T1', '/api/erase': 'T1', '/api/update': 'T1',
-        '/api/setup_save': 'T1', '/api/setup_check': 'T1', '/api/setup_dismiss': 'T1', '/api/setup_learn': 'T1',      # the owner's own settings, from the Setup screen
+        '/api/setup_save': 'T1', '/api/setup_key': 'T1', '/api/setup_check': 'T1', '/api/setup_dismiss': 'T1', '/api/setup_learn': 'T1',      # the owner's own settings, from the Setup screen
         '/api/inbox_tick': 'T1', '/api/answer': 'T1', '/api/jarvis_task': 'T1', '/api/run_now': 'T1', '/api/tickets_save': 'T1',
         '/api/consult_done': 'T1', '/api/reminder_done': 'T1', '/api/jarvis_drop': 'T1', '/api/jarvis_model': 'T1',
         '/api/open_output': 'T1',
@@ -46,7 +46,7 @@ TIER = {'/api/demo_start': 'T1', '/api/demo_leave': 'T1', '/api/export': 'T1', '
         # safe direction and work from any local page
         '/api/ladder_raise': 'T2', '/api/ladder_lower': 'T1', '/api/held_stop': 'T1'}
 # In the demo these would start a run or reach outside it: refused there, whatever their tier.
-DEMO_REFUSED = {'/api/run_now', '/api/jarvis_task', '/api/setup_learn', '/api/setup_check', '/api/setup_save', '/api/research', '/api/export',
+DEMO_REFUSED = {'/api/setup_key', '/api/run_now', '/api/jarvis_task', '/api/setup_learn', '/api/setup_check', '/api/setup_save', '/api/research', '/api/export',
                 '/api/erase', '/api/update', '/api/demo_start', '/api/share_file', '/api/watch'}
 QUIET = {'/api/jarvis_drop', '/api/consult_done', '/api/reminder_done', '/api/jarvis_prewarm'}   # too chatty to record
 _recent, _lock = {}, threading.Lock()
@@ -87,12 +87,21 @@ def check(path, body, headers):
     return True, ''
 
 
+SECRET_FIELDS = {'/api/setup_key': ('key',)}       # requests that carry a secret, and its field: never recorded, not even hashed
+
+
+def _recordable(body, path=''):
+    """The request as it may be recorded: the screen's context dropped, and a secret (the API key saved on Setup) kept out."""
+    hide = SECRET_FIELDS.get(path, ())
+    return {k: ('(withheld)' if k in hide and v else v) for k, v in (body or {}).items() if k not in ('screen',)}
+
+
 def begin(path, body, headers):
     """Records the action; returns (action_id, previous_response or None). previous_response = same request <30 s ago."""
     if path in QUIET:
         return None, None
     t = tier(path, body)
-    payload = {k: v for k, v in (body or {}).items() if k not in ('screen',)}
+    payload = _recordable(body, path)
     h = ledger.sha({'p': path, 'b': payload})
     now = time.time()
     with _lock:
@@ -118,7 +127,7 @@ def end(aid, path, body, response, code):
                                                                         'queued_behind', 'steered', 'dry', 'result', 'already')}
     ledger.x('UPDATE actions SET state=?, receipt=?, ended=? WHERE id=?',
              ('done' if ok else 'failed', json.dumps(receipt, ensure_ascii=False, default=str)[:2000], ledger.now(), aid))
-    h = ledger.sha({'p': path, 'b': {k: v for k, v in (body or {}).items() if k not in ('screen',)}})
+    h = ledger.sha({'p': path, 'b': _recordable(body, path)})
     with _lock:
         if h in _recent:
             _recent[h] = (_recent[h][0], (response, code))

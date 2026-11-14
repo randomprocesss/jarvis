@@ -20,6 +20,7 @@ State: state/kb_fold/ (one file per workstream + status.json for the tracker). R
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))   # the repository: a tool run by itself finds the package
 from jarvis import paths
+from jarvis import procs
 import concurrent.futures as cf, datetime as dt, glob, json, os, re, sys, threading
 
 HUB = str(paths.home())
@@ -421,7 +422,6 @@ def _append_under(text, name, body):
 def split_data(slug):
     """24 Oct: a data-deliverables-people sub-note over BIG loses its 'Data and code' section to a new sub-note
     <slug>--data-code, word for word; the topic map and the parent's sub-note list get it."""
-    import fcntl
     src = slug + '--data-deliverables-people'; dst = slug + '--data-code'
     p, q = os.path.join(TOP, src + '.md'), os.path.join(TOP, dst + '.md')
     if not os.path.exists(p) or os.path.exists(q) or len(open(p, errors='replace').read()) <= BIG:
@@ -450,7 +450,7 @@ def split_data(slug):
         pt = pt.replace(line, line + f"\n- [[{dst}]]: {title}: data and code", 1)
         open(par + '.tmp', 'w').write(pt); os.replace(par + '.tmp', par)
     with open(MAP + '.lock', 'w') as lk:
-        fcntl.flock(lk, fcntl.LOCK_EX)
+        procs.flock(lk)
         cur = json.load(open(MAP))
         for x in cur:
             if x['slug'] == slug and dst not in (x.get('subnotes') or []):
@@ -458,7 +458,7 @@ def split_data(slug):
         if not any(x['slug'] == dst for x in cur):
             cur.append({'slug': dst, 'title': f'{title}: data and code', 'parent': slug, 'sources': []})
         json.dump(cur, open(MAP + '.tmp', 'w'), indent=1); os.replace(MAP + '.tmp', MAP)
-        fcntl.flock(lk, fcntl.LOCK_UN)
+        procs.funlock(lk)
     K.log(f'split_data: {slug}: Data and code ({len(new_dst) // 1000} KB) now in {dst}; {src} is {len(new_src) // 1000} KB')
     return True
 

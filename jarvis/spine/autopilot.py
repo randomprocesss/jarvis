@@ -19,6 +19,7 @@ Changing its own code is off unless the owner turns it on (settings: modules.sel
             reach: those stay behind their press, enforced by the hooks and the gateway, which it may not change.
 """
 from jarvis import paths
+from jarvis import procs
 import datetime as dt, json, os, re, subprocess, threading, time, uuid
 
 HUB = str(paths.home())
@@ -257,7 +258,7 @@ def _redeploy():
             return 'Jarvis.app is closed: live at its next launch'
         log = open(os.path.join(STATE, 'autopilot_redeploy.log'), 'a')
         subprocess.Popen(['sh', str(paths.tool('redeploy.sh'))], stdout=log, stderr=log, stdin=subprocess.DEVNULL,
-                         start_new_session=True)
+                         **procs.session_kw())
     except OSError:                                   # no Mac app on this computer: the new code is live at the next start
         return 'live at the next start'
     return 'redeploying'

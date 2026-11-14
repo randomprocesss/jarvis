@@ -14,6 +14,7 @@ shared-record lint as hooks; see tools/worker_hook.py) and env JARVIS_PROC=1, JA
 work folder (settings: work.folders), so they see that folder's own instructions.
 """
 from jarvis import paths
+from jarvis import procs
 import datetime as dt, json, os, re, signal, subprocess, threading, time, uuid
 from jarvis.spine import ledger
 
@@ -239,7 +240,7 @@ def _launch(t, resume=False):
     cmd += ['--permission-mode', 'auto', '--settings', SETTINGS] + (['--model', wm] if wm else [])   # effort: the model's default, never lowered
     env = dict(MCP_ENV, JARVIS_PROC='1', JARVIS_TASK_ID=t['id'], JARVIS_LANE=t['lane'])
     p = subprocess.Popen(exit_wrapped(cmd, log_path), cwd=_workdir(), stdout=log, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
-                         start_new_session=True, env=env)
+                         **procs.session_kw(), env=env)
     _procs[t['id']] = p
     ledger.x("UPDATE tasks SET state='running', pid=?, started=COALESCE(started, ?), heartbeat_at=?, log=?, attempts=attempts+? WHERE id=?",
              (p.pid, ledger.now(), ledger.now(), os.path.relpath(log_path, HUB), 1 if resume else 0, t['id']))
@@ -277,7 +278,7 @@ def _watchdog(t):
     idle = _activity(t)
     def sig(s):
         try:
-            os.killpg(os.getpgid(int(t['pid'])), s)
+            procs.signal_group(int(t['pid']), s)
         except (OSError, TypeError, ValueError):
             pass
     if age_min >= MAX_MIN:
@@ -332,7 +333,7 @@ def _reap():
             ledger.event('task_done', t['id'], t['origin'], {'lane': t['lane'], 'rid': t['rid'], 'aid': t['aid']})
         elif rc in (-signal.SIGINT, 130) and t.get('note') == 'preempted':
             ledger.x("UPDATE tasks SET state='paused', exit=? WHERE id=?", (rc, t['id']))
-        elif (t.get('attempts') or 0) < RESUME_MAX and rc not in (-signal.SIGTERM, -signal.SIGKILL, 143):
+        elif (t.get('attempts') or 0) < RESUME_MAX and rc not in (-signal.SIGTERM, -getattr(signal, 'SIGKILL', 9), 143):
             ledger.x("UPDATE tasks SET state='paused', exit=?, note='died; will resume' WHERE id=?", (rc, t['id']))
             ledger.event('task_died', t['id'], t['origin'], {'exit': rc, 'attempts': t.get('attempts')})
         else:
@@ -350,11 +351,10 @@ def _overtime(t, rc):
                                                       'title': t['title'], 'why': f'ran over {MAX_MIN // 60} hours; stopped'})
     if not (t.get('rid') and t.get('aid')):
         return
-    import fcntl
     f = os.path.join(HUB, 'work', t['rid'] + '.json')
     try:
         with open(f + '.lock', 'w') as lk:
-            fcntl.flock(lk, fcntl.LOCK_EX)
+            procs.flock(lk)
             d = json.load(open(f)) if os.path.exists(f) else {}
             w = d.setdefault(t['aid'], {})
             out = f"work/outputs/{t['rid']}-{t['aid']}/"
@@ -370,7 +370,7 @@ def _overtime(t, rc):
             w['needs_you'] = w.get('needs_you') or f'Stopped at the {MAX_MIN // 60}-hour limit; restart it? (its work so far is kept)'
             w['updated'] = dt.datetime.now().astimezone().isoformat(timespec='seconds')
             tmp = f + '.tmp'; json.dump(d, open(tmp, 'w'), indent=1, ensure_ascii=False); os.replace(tmp, f)
-            fcntl.flock(lk, fcntl.LOCK_UN)
+            procs.funlock(lk)
     except (OSError, ValueError) as e:
         ledger.event('overtime_note_failed', t['id'], 'watchdog', {'error': str(e)[:200]})
 
@@ -407,14 +407,14 @@ def _hit_limit(t):
 
 
 def exit_wrapped(cmd, log_path):
-    """cmd run through sh, which writes its exit code to run.exit next to the log. 1 Nov: runs started detached (the
+    """cmd run through a small wrapper that writes its exit code to run.exit next to the log. 1 Nov: runs started detached (the
     hourly Check messages, the operator) or before a server restart left no exit code, and were judged by their log."""
     xf = os.path.splitext(log_path)[0] + '.exit'
     try:
         os.remove(xf)                         # a resumed task reuses its log: never read the last attempt's code
     except OSError:
         pass
-    return ['/bin/sh', '-c', '"$@"; rc=$?; echo $rc > "$0"; exit $rc', xf] + list(cmd)
+    return procs.exit_file_wrapper(xf, cmd)
 
 
 def _exit_file(t):
@@ -456,7 +456,7 @@ def _preempt_one(only_initiative=False):
     t = rows[0]
     ledger.x("UPDATE tasks SET note='preempted' WHERE id=?", (t['id'],))
     try:
-        os.killpg(os.getpgid(int(t['pid'])), signal.SIGINT)
+        procs.signal_group(int(t['pid']), signal.SIGINT)
     except (OSError, TypeError, ValueError):
         pass
     ledger.event('task_preempted', t['id'], 'spine', {'for': 'asked work'})
@@ -550,7 +550,7 @@ def stop(rid, aid):
             hit = True
             if t['state'] == 'running':
                 try:
-                    os.killpg(os.getpgid(int(t['pid'])), signal.SIGTERM)
+                    procs.signal_group(int(t['pid']), signal.SIGTERM)
                 except (OSError, TypeError, ValueError):
                     pass
             ledger.x("UPDATE tasks SET state='stopped', ended=? WHERE id=?", (ledger.now(), t['id']))

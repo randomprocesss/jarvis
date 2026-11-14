@@ -8,6 +8,7 @@ so a second press while one runs is simply done by that same worker or the next 
 run_now() starts a routine at once when the owner asks for it, instead of waiting for its next scheduled run.
 """
 from jarvis import config
+from jarvis import procs
 from jarvis import paths
 import datetime as dt, json, os, re, subprocess, threading, time, uuid
 
@@ -119,7 +120,7 @@ def _spawn():
                           'Do nothing that is not approved.', '--session-id', (sid := str(uuid.uuid4())),
                           '--permission-mode', 'auto', '--settings', OPERATOR_SETTINGS] + _work_model(), os.path.join(out, 'run.log')),
                          cwd=str(paths.workdir()), stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT,
-                         start_new_session=True, env=dict(WORKER_ENV, JARVIS_LANE='operator'))
+                         **procs.session_kw(), env=dict(WORKER_ENV, JARVIS_LANE='operator'))
     open(PIDFILE, 'w').write(str(p.pid))
     _ledger('operator', 'approved-actions', 'Carry out what the owner approved', p.pid, os.path.join(out, 'run.log'), 'owner', sid)
     return 'started'
@@ -178,7 +179,7 @@ def run_now(what, origin='owner'):
     p = subprocess.Popen(exit_wrapped([CLAUDE, '-p', prompt, '--session-id', sid, '--permission-mode', 'auto', '--settings', SETTINGS] + model,
                                       os.path.join(out, 'run.log')),
                          cwd=str(paths.workdir()), stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT,
-                         start_new_session=True, env=dict(WORKER_ENV, JARVIS_LANE=lane, JARVIS_RUN_KIND=what,
+                         **procs.session_kw(), env=dict(WORKER_ENV, JARVIS_LANE=lane, JARVIS_RUN_KIND=what,
                                                           JARVIS_RUN_START=dt.datetime.now().astimezone().isoformat(timespec='seconds')))
     open(pidf, 'w').write(str(p.pid))
     _ledger(lane, 'run-' + what, {'roundup': 'Check messages', 'work': 'Work on the inbox', 'tickets': 'Create approved tickets'}.get(what, what),

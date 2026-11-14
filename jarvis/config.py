@@ -81,7 +81,8 @@ DEFAULTS = {
                                                                    # never | allowed (takes effect at the next start)
     'notify': {'enabled': True},                                   # pings to the owner's phone or desktop
     'health': {'watch_logins': []},                                # command-line logins to watch, e.g. "gcloud"
-    'modules': {'voice': False, 'deploy_gate': False, 'vault': False, 'prwatch': False,
+    # the optional parts (jarvis/modules), each switched on here
+    'modules': {'deploy_gate': False, 'vault': False, 'prwatch': False,
                 'self_improve': False},                             # Jarvis changing its own code (tested, watched, undone if worse)
     'links': {'ticket_base': ''},                                  # e.g. their tracker's "browse" address, for ticket links
     'server': {'port': 8765},

@@ -4,12 +4,13 @@ import os
 import subprocess
 
 from jarvis import paths
+from jarvis import procs
 
 
 def _run():
     log = open(str(paths.logs('prwatch.log')), 'a')
     return subprocess.Popen([paths.python(), str(paths.tool('prwatch.py'))], cwd=str(paths.home()),
-                            stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
+                            stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT, **procs.session_kw())
 
 
 def status(q=None):

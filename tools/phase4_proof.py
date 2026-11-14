@@ -216,7 +216,8 @@ def watchdog():
     old_db, old_hub = ledger.DB, d.HUB
     ledger.DB = os.path.join(tmp, 'w.db'); d.HUB = tmp
     getattr(ledger, 'init', lambda: None)()
-    p = subprocess.Popen(['/bin/sleep', '600'], start_new_session=True)
+    from jarvis import procs
+    p = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(600)'], **procs.session_kw())
     log = os.path.join(tmp, 'run.log'); open(log, 'w').write('x')
     os.utime(log, (time.time() - 3600, time.time() - 3600))         # no activity for an hour
     t = {'id': 'T-proof', 'lane': 'background', 'pid': p.pid, 'started': (time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(time.time() - 1800))),

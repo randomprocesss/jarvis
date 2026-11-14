@@ -24,8 +24,16 @@ ACT_KINDS = ('data_need', 'answer_need')
 
 
 def on_ac():
+    """Is the computer on mains power? Jarvis's own checks wait while it runs on battery. A computer that cannot say
+    (a desktop, a server, Windows) counts as on mains power."""
+    import glob, sys
     try:
-        return 'AC Power' in subprocess.run(['pmset', '-g', 'batt'], capture_output=True, text=True, timeout=3).stdout
+        if sys.platform == 'darwin':
+            return 'AC Power' in subprocess.run(['pmset', '-g', 'batt'], capture_output=True, text=True, timeout=3).stdout
+        supplies = glob.glob('/sys/class/power_supply/*/online')
+        if supplies:
+            return any(open(f).read().strip() == '1' for f in supplies)
+        return True
     except Exception:
         return False
 

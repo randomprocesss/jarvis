@@ -258,13 +258,13 @@ class Command(Base):
         self.assertIn('ok    Claude Code 9.9.9', out)
         self.assertIn('Everything Jarvis needs is here.', out)
         from jarvis import setup
-        found = self.paths.claude_bin
-        self.paths.claude_bin = lambda: ''                                       # a computer without Claude Code
+        found = self.paths.claude_real
+        self.paths.claude_real = lambda: ''                                      # a computer without Claude Code
         setup.forget()
         try:
             code, out = self.run_cli('doctor', '--port', str(free_port()))
         finally:
-            self.paths.claude_bin = found
+            self.paths.claude_real = found
             setup.forget()
         self.assertEqual(code, 1)
         self.assertIn('FIX   Claude Code', out)

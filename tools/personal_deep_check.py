@@ -17,6 +17,7 @@ Verdicts are cached by the piece's hash in state/personal_deep.json, so a stop n
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))   # the repository: a tool run by itself finds the package
 from jarvis import paths
+from jarvis import procs
 import datetime as dt, glob, hashlib, json, os, re, sys
 
 HUB = str(paths.home())
@@ -90,26 +91,24 @@ def _trusted():
 
 def _trust(hs):
     if hs:
-        import fcntl
         with open(TRUSTED + '.lock', 'w') as lk:
-            fcntl.flock(lk, fcntl.LOCK_EX)
+            procs.flock(lk)
             cur = _trusted() | set(hs)
             tmp = TRUSTED + '.tmp'; json.dump(sorted(cur), open(tmp, 'w')); os.replace(tmp, TRUSTED)
             _MEMO['trusted'] = (_stamp(TRUSTED), cur)
-            fcntl.flock(lk, fcntl.LOCK_UN)
+            procs.funlock(lk)
 
 
 def _merge(new):
     """Write verdicts without losing anyone else's: under a lock, re-read the file and add these (16 Oct: two processes
     writing the whole cache had erased each other's marks)."""
-    import fcntl
     with open(CACHE + '.lock', 'w') as lk:
-        fcntl.flock(lk, fcntl.LOCK_EX)
+        procs.flock(lk)
         cur = _load()
         cur.update(new)
         tmp = CACHE + '.tmp'; json.dump(cur, open(tmp, 'w')); os.replace(tmp, CACHE)
         _MEMO['cache'] = (_stamp(CACHE), cur)
-        fcntl.flock(lk, fcntl.LOCK_UN)
+        procs.funlock(lk)
 
 
 def _chunks(text):

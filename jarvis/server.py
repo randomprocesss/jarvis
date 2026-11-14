@@ -6,6 +6,7 @@ tracker, Slack or a database are never done here directly: they become approved 
 (actions.py), or go through tracker.py with a dry run first.
 """
 from jarvis import config, paths
+from jarvis import procs
 import datetime as dt, errno, glob, http.server, json, os, re, subprocess, sys, threading, time, urllib.parse
 
 paths.ensure()                                   # the data home and its folders exist before anything reads them
@@ -693,7 +694,7 @@ def open_output(path):
     target = os.path.realpath(os.path.expanduser(str(path)))
     if not any(target == r or target.startswith(r + os.sep) for r in roots) or not os.path.exists(target):
         return {'ok': False, 'out': "That is not one of Jarvis's work folders, or it no longer exists."}, 400
-    return run(['open', target]), 200
+    return {'ok': procs.open_path(target), 'out': ''}, 200
 
 
 def nudges(q):
@@ -813,7 +814,9 @@ def load_modules(log=print):
     """The optional parts the owner switched on in settings (modules.<name>): each brings its own routes and timed jobs.
     One that is switched on but cannot be loaded is said in the log and left out; the rest of Jarvis runs."""
     import importlib
-    for name in ('deploy_gate', 'vault'):
+    import pkgutil
+    from jarvis import modules as _mods
+    for name in sorted(m.name for m in pkgutil.iter_modules(_mods.__path__)):     # every part in jarvis/modules
         if not config.load().get(f'modules.{name}'):
             continue
         try:
@@ -1032,9 +1035,10 @@ def post(path, b):
         p = _product()
         return {'/api/demo_start': p.demo_start, '/api/demo_leave': p.demo_leave, '/api/export': p.export, '/api/erase': p.erase,
                 '/api/update': p.update}[path](b)
-    if path in ('/api/setup_save', '/api/setup_check', '/api/setup_dismiss', '/api/setup_learn'):       # the Setup screen (jarvis/setup.py)
+    if path in ('/api/setup_save', '/api/setup_check', '/api/setup_dismiss', '/api/setup_learn', '/api/setup_key'):       # the Setup screen (jarvis/setup.py)
         s = _setup()
-        return {'/api/setup_save': s.save, '/api/setup_check': s.check, '/api/setup_dismiss': s.dismiss, '/api/setup_learn': s.learn}[path](b)
+        return {'/api/setup_save': s.save, '/api/setup_check': s.check, '/api/setup_dismiss': s.dismiss, '/api/setup_learn': s.learn,
+                '/api/setup_key': s.key}[path](b)
     if path == '/api/jarvis_task':
         return assistant.task(b), 200
     if path == '/api/jarvis_model':                       # the model switcher (voice set_model or the landing picker)
@@ -1295,7 +1299,7 @@ def _tool_job(name, *args, out=None):
     def start():
         log = open(out, 'a') if out else subprocess.DEVNULL
         return subprocess.Popen([paths.python(), str(tool), *args], cwd=HUB, stdin=subprocess.DEVNULL, stdout=log,
-                                stderr=subprocess.STDOUT if out else subprocess.DEVNULL, start_new_session=True)
+                                stderr=subprocess.STDOUT if out else subprocess.DEVNULL, **procs.session_kw())
     return start
 
 

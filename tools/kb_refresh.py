@@ -23,6 +23,7 @@ brain/kb_refresh.json.
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))   # the repository: a tool run by itself finds the package
 from jarvis import config, paths
+from jarvis import procs
 import datetime as dt, glob, json, os, re, shutil, subprocess, sys, time
 
 HUB = str(paths.home())
@@ -194,10 +195,9 @@ def map_merge(topics):
     """Write the topic map without losing anyone else's change (24 Oct: the nightly update saved its copy, read before the
     Step 7 split, after each workstream and erased 20 sub-note entries): under a lock, re-read the file, union each
     workstream's sources, add entries it lacks, and keep every field and entry already there."""
-    import fcntl
     mp = os.path.join(KB, 'topic_map.json')
     with open(mp + '.lock', 'w') as lk:
-        fcntl.flock(lk, fcntl.LOCK_EX)
+        procs.flock(lk)
         try:
             cur = json.load(open(mp))
         except (OSError, ValueError):
@@ -212,7 +212,7 @@ def map_merge(topics):
                 if k != 'sources' and k not in c:
                     c[k] = v
         tmp = mp + '.tmp'; json.dump(cur, open(tmp, 'w'), indent=1); os.replace(tmp, mp)
-        fcntl.flock(lk, fcntl.LOCK_UN)
+        procs.funlock(lk)
 
 
 FILING = os.path.join(HUB, 'state', 'topics_filing.json')   # note id -> its workstreams, kept across runs (22 Oct)
@@ -437,7 +437,7 @@ def run(dry=False):
     if not dry and '--if-due' in sys.argv:               # the nightly update: its own small allowance, set before anything asks
         try:                                             # and the Mac stays awake while it runs (19 Oct, his yes)
             subprocess.Popen(['/usr/bin/caffeinate', '-i', '-w', str(os.getpid())], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                             stderr=subprocess.DEVNULL, start_new_session=True)
+                             stderr=subprocess.DEVNULL, **procs.session_kw())
         except Exception:
             pass
         import kb_build as K
@@ -586,8 +586,7 @@ if __name__ == '__main__':
             sys.exit(0)
         if not due(load(), dt.datetime.now()):
             sys.exit(0)
-        if subprocess.run(['pgrep', '-f', 'kb_build.py|kb_extra.py|kb_tidy.py|kb_live_delta|kb_ledger.py|kb_topics.py|kb_pointers.py'],
-                          capture_output=True).stdout.strip():
+        if procs.others_running(r'kb_build\.py|kb_extra\.py|kb_tidy\.py|kb_live_delta|kb_ledger\.py|kb_topics\.py|kb_pointers\.py'):
             sys.exit(0)                                   # the full build is writing the same notes (10 Nov: the tidy, track 3 and the
             #                                               ledger too, two writers of its cache): try again next hour
         if not _take_lock(wait_hours=6):

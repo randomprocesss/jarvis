@@ -34,7 +34,8 @@ The checks, all of which must hold for allow=True:
   quiet           not between 22:30 and 07:00
 """
 from jarvis import paths
-import datetime as dt, fcntl, hashlib, hmac, json, os, re, sqlite3, sys
+from jarvis import procs
+import datetime as dt, hashlib, hmac, json, os, re, sqlite3, sys
 
 HUB = str(paths.home())
 DB = os.path.join(HUB, 'state', 'jarvis.db')
@@ -300,7 +301,7 @@ class _Queue:
     """The hold queue under a file lock: load, change, save as one step (two timers, or a timer and their stop)."""
     def __enter__(self):
         os.makedirs(os.path.dirname(HELD), exist_ok=True)
-        self.f = open(HELD + '.lock', 'w'); fcntl.flock(self.f, fcntl.LOCK_EX)
+        self.f = open(HELD + '.lock', 'w'); procs.flock(self.f)
         try:
             self.rows = json.load(open(HELD))
         except (OSError, ValueError):
@@ -312,7 +313,7 @@ class _Queue:
         json.dump(self.rows[-400:], open(tmp, 'w'), indent=1, ensure_ascii=False); os.replace(tmp, HELD)
 
     def __exit__(self, *a):
-        fcntl.flock(self.f, fcntl.LOCK_UN); self.f.close()
+        procs.funlock(self.f); self.f.close()
 
 
 def held(states=None):

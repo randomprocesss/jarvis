@@ -13,6 +13,7 @@ phone call (3 Oct), asked work waiting for a routine or another task (5 Oct). Ex
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))   # the repository: a tool run by itself finds the package
 from jarvis import paths
+from jarvis import procs
 import json, os, re, sys, tempfile, time
 
 HUB_REAL = str(paths.home())                          # the owner's own data home: only the result goes there
@@ -117,7 +118,7 @@ def _sandbox():
     def restore():
         for t in ledger.q("SELECT id, pid FROM tasks WHERE state='running'"):
             try:
-                os.killpg(os.getpgid(int(t['pid'])), 9)
+                procs.signal_group(int(t['pid']), 9)
             except Exception:
                 pass
         dispatcher._procs.clear()
@@ -153,7 +154,7 @@ def background_yields():
         st_bg = d.task(bg['id'])['state']; st_ask = d.task(ask['id'])['state']
         d.mem_free_pct = lambda: 90
         for t in ledger.q("SELECT pid FROM tasks WHERE id=?", (ask['id'],)):
-            os.killpg(os.getpgid(int(t['pid'])), 9)
+            procs.signal_group(int(t['pid']), 9)
         time.sleep(0.5); d.dispatch(); d.dispatch()
         after = d.task(bg['id'])
         ok = st_ask == 'running' and st_bg == 'paused' and after['state'] == 'running' and after['attempts'] == 1
@@ -357,7 +358,7 @@ def operator_never_waits():
         return ok, {'busy_workers': busy, 'first_press': r1, 'second_press': r2, 'ms': round(ms)}
     finally:
         try:
-            pid = int(open(ca.PIDFILE).read()); os.killpg(os.getpgid(pid), 9)
+            pid = int(open(ca.PIDFILE).read()); procs.signal_group(pid, 9)
         except Exception:
             pass
         ca.CLAUDE, ca.PIDFILE, ca.HUB = old

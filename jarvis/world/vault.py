@@ -19,6 +19,7 @@ A mirror whose source is gone, or which now fails the screen, is removed (to the
 overwritten or removed (listed as 'edited'). What was held and why: state/vault.json.
 """
 from jarvis import config, paths, screens
+from jarvis import procs
 from jarvis.world.vault_layout import kbf
 import glob, hashlib, json, os, re, subprocess
 
@@ -418,17 +419,16 @@ def sync(ask=None, admit=True):
     and a run by hand never write the vault at the same moment."""
     if not root():
         return {'skipped': 'the vault is off (settings: modules.vault and vault.path)'}
-    import fcntl
     lk = open(os.path.join(HUB, 'state', 'vault.sync.lock'), 'w')
     try:
-        fcntl.flock(lk, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        procs.flock(lk, block=False)
     except OSError:
         lk.close()
         return {'skipped': 'another sync is running'}
     try:
         return _sync(ask, admit)
     finally:
-        fcntl.flock(lk, fcntl.LOCK_UN); lk.close()
+        procs.funlock(lk); lk.close()
 
 
 def _sync(ask=None, admit=True):

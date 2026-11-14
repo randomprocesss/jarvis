@@ -95,6 +95,8 @@ def window(max_age=1200, may_probe=False, sync=False):
     """sync (24 Oct): probe now and wait for it. A caller that gates spending on the line uses it: the threaded probe died
     with every short-lived process that started it, and its throttle then blocked the next probes, so the week read 40%
     for 20 minutes while it was at 48%."""
+    if api_mode():
+        return api_window()
     w = _load(WINDOW, {})
     if sync and (not w or _now() - w.get('at', 0) > max_age):
         probe()
@@ -110,6 +112,35 @@ def window(max_age=1200, may_probe=False, sync=False):
                 w[k.replace('_reset', '')] = 0.0
         w['age_s'] = round(_now() - w.get('at', 0))
     return w
+
+
+def api_mode():
+    """Is Jarvis running on an API key (paid per use) rather than a Claude plan?"""
+    try:
+        from jarvis import config
+        return config.load().get('engine.mode') == 'api-key'
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def api_window(now=None):
+    """With an API key there is no plan window; the owner's daily money limit (engine.daily_cap_usd) plays its part. The
+    share of today's limit already spent stands where the 5-hour window's share would, and it resets at midnight, so
+    every rule above holds as it is: inbox work waits at 85% of the limit, Jarvis's own checks at 60%, learning at its
+    line. Work the owner asks for is never held. Spending comes from the cost Claude Code reports for each run
+    (jarvis/claude_run.py); nothing is guessed from a price list."""
+    from jarvis import claude_run, config
+    n = now or dt.datetime.now().astimezone()
+    try:
+        cap = float(config.load().get('engine.daily_cap_usd') or 0)
+    except (TypeError, ValueError):
+        cap = 0.0
+    spent = claude_run.spent_today(n)
+    frac = (spent['usd'] / cap) if cap > 0 else 0.0
+    midnight = (n + dt.timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+    return {'at': n.timestamp(), 'age_s': 0, 'mode': 'api-key', 'status': 'allowed_warning' if frac >= 0.85 else 'allowed',
+            'five_hour': round(frac, 4), 'five_hour_reset': midnight.timestamp(), 'seven_day': None, 'seven_day_reset': None,
+            'spent_usd': spent['usd'], 'cap_usd': cap, 'runs': spent['runs'], 'runs_without_cost': spent['unknown']}
 
 
 # ------------------------------------------------------------------ usage from transcripts

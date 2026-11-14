@@ -13,6 +13,7 @@ Background work: tasks Jarvis starts (one worker at a time, /api/jarvis_task), s
 read-only consults of a full Claude (ask_claude).
 """
 from jarvis import config
+from jarvis import procs
 from jarvis import paths
 import datetime as dt, json, os, random, re, signal, subprocess, threading, time, uuid
 from jarvis import human as human
@@ -1395,7 +1396,7 @@ def stop_task(rid, aid):
             for line in ps.splitlines():
                 pid, _, cmd = line.strip().partition(' ')
                 if re.match(r'\S*/claude -p Use the jarvis-inbox-work skill on round-up %s item %s only' % (re.escape(rid), re.escape(aid)), cmd.strip()):
-                    os.killpg(os.getpgid(int(pid)), signal.SIGTERM); hit = True
+                    procs.signal_group(int(pid), signal.SIGTERM); hit = True
         except Exception:
             pass
     if hit:

@@ -115,7 +115,25 @@ def python() -> str:
 
 
 def claude_bin() -> str:
-    """The Claude Code command: JARVIS_CLAUDE if set, else the one on PATH, else the usual install places. '' if none."""
+    """The Claude Code command every Jarvis run starts. With an API key in place of a Claude plan (settings: engine.mode =
+    "api-key"), that is Jarvis's own launcher, which hands Claude the key from the password store and counts what each run
+    cost (jarvis/claude_run.py); otherwise Claude Code itself. '' if Claude Code is not found."""
+    real = claude_real()
+    if not real:
+        return ''
+    from . import config                             # config imports this module, so not at the top
+    try:
+        mode = config.load().get('engine.mode')
+    except Exception:  # noqa: BLE001  unreadable settings: the plan's way, which needs no key
+        mode = ''
+    if mode == 'api-key':
+        from . import claude_run
+        return claude_run.launcher(real)
+    return real
+
+
+def claude_real() -> str:
+    """Claude Code itself: JARVIS_CLAUDE if set, else the one on PATH, else the usual install places. '' if none."""
     named = os.environ.get('JARVIS_CLAUDE')
     if named:
         return named

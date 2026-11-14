@@ -131,7 +131,8 @@ def install(port=8765):
         os._exit(0)
     signal.signal(signal.SIGTERM, on_term)
     faulthandler.enable(file=_fault_file, all_threads=True)
-    faulthandler.register(signal.SIGUSR1, file=_fault_file, all_threads=True, chain=False)
+    if hasattr(signal, 'SIGUSR1') and hasattr(faulthandler, 'register'):      # not on Windows: a dump on request is a POSIX signal
+        faulthandler.register(signal.SIGUSR1, file=_fault_file, all_threads=True, chain=False)
 
     def main_hook(t, v, tb):
         _log('FATAL uncaught exception, exiting 70 so the supervisor restarts the server:\n' + ''.join(traceback.format_exception(t, v, tb)))

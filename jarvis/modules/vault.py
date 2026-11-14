@@ -5,6 +5,7 @@ import os
 import subprocess
 
 from jarvis import paths
+from jarvis import procs
 from jarvis.world import vault
 
 
@@ -12,7 +13,7 @@ def _sync():
     """Start one pass in its own process; its result line goes to the log."""
     log = open(str(paths.logs('vault_sync.log')), 'a')
     return subprocess.Popen([paths.python(), os.path.join(str(paths.REPO), 'jarvis', 'world', 'vault_run.py')], cwd=str(paths.home()),
-                            stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
+                            stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT, **procs.session_kw())
 
 
 def status(q=None):

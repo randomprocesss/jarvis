@@ -27,6 +27,7 @@ the personal screens like every other note.
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))   # the repository: a tool run by itself finds the package
 from jarvis import config, entities, paths
+from jarvis import procs
 import hashlib, datetime as dt, glob, json, os, re, subprocess, sys, time
 
 HUB = str(paths.home())
@@ -960,13 +961,12 @@ def _save(st):
 
 
 def _update(fn):
-    import fcntl
     with open(STATE + '.lock', 'w') as lk:
-        fcntl.flock(lk, fcntl.LOCK_EX)
+        procs.flock(lk)
         cur = _state()
         fn(cur)
         tmp = STATE + '.tmp'; json.dump(cur, open(tmp, 'w'), indent=1); os.replace(tmp, STATE)
-        fcntl.flock(lk, fcntl.LOCK_UN)
+        procs.funlock(lk)
 
 
 def _set(key, value, sub=None):

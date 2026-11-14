@@ -19,6 +19,7 @@ import sys
 import time
 
 from . import config, paths
+from jarvis import procs
 
 CONNECTORS_PAGE = 'https://claude.ai/settings/connectors'
 CLAUDE_PAGE = 'https://claude.com/claude-code'
@@ -78,7 +79,7 @@ def claude():
     """Is Claude Code here and signed in? No model call: the command's own version and sign-in status only. Never the
     account's address or organisation."""
     def look():
-        exe = paths.claude_bin()
+        exe = paths.claude_real()
         if not exe:
             return {'found': False, 'signed_in': False,
                     'fix': f'Claude Code is not installed on this computer. Install it from {CLAUDE_PAGE}, sign in, then press Check again.'}
@@ -96,6 +97,12 @@ def claude():
             out['plan'] = str(d.get('subscriptionType') or '')[:40]
         except (OSError, ValueError, subprocess.SubprocessError):
             out['unknown'] = True                     # an older Claude Code: the test below is the proof
+        if config.load().get('engine.mode') == 'api-key':          # the key stands where the sign-in would
+            from . import keystore
+            out.update(signed_in=keystore.has(), unknown=False, key=True, key_where=keystore.where(), key_store=bool(keystore.backend()))
+            if not out['signed_in']:
+                out['fix'] = 'No API key yet. Paste it below: it is kept in ' + keystore.where().split(':')[0] + ', never in a file.' if keystore.backend() else keystore.where()
+            return out
         if not out['signed_in'] and not out.get('unknown'):
             out['fix'] = 'Claude Code is installed but not signed in. Run "claude" in a terminal once and sign in, then press Check again.'
         return out
@@ -178,6 +185,11 @@ def apps():
     """One row per app Jarvis can read through the owner's Claude account: connected or not, by Claude's last report."""
     c, seen = config.load(), connectors()
     on = bool(c.get('sources.claude_connectors'))
+    if c.get('engine.mode') == 'api-key':
+        return {'on': False, 'checked': seen['at'], 'api_key': True, 'other': [],
+                'rows': [{'id': w.replace(' ', '_'), 'label': label, 'what': what, 'state': 'needs its own tool server', 'used': False,
+                          'fix': 'With an API key, the apps connected to a Claude account are out of reach. Add a tool server for it to the file named in sources.mcp_config, and its read tools to sources.read_tools.'}
+                         for w, label, what in APPS]}
     rows = []
     for word, label, what in APPS:
         hit = next((s for s in seen['servers'] if word in str(s.get('name', '')).lower()), None)
@@ -301,7 +313,7 @@ def learn(b=None):
     paths.ensure()
     log = open(str(paths.logs('learn_first.log')), 'a')
     p = subprocess.Popen([paths.python(), str(paths.tool('learn_first.py'))], cwd=str(paths.home()), stdin=subprocess.DEVNULL, stdout=log,
-                         stderr=subprocess.STDOUT, start_new_session=True)
+                         stderr=subprocess.STDOUT, **procs.session_kw())
     forget()
     return {'ok': True, 'pid': p.pid}, 200
 
@@ -458,7 +470,8 @@ def steps():
         {'id': 'sources', 'title': 'Sources', 'done': bool((ch['on'] and ch['found']) or any_app),
          'status': f"{ch['found']} Claude Code chats in {ch['projects']} projects on this computer; " + (
              (', '.join(r['label'] for r in ap['rows'] if r['state'] == 'connected') + ' connected.') if any_app else
-             ('no app checked yet.' if ap['checked'] is None else 'no app connected.')),
+             ('apps connected to a Claude account are out of reach with an API key.' if ap.get('api_key') else
+              'no app checked yet.' if ap['checked'] is None else 'no app connected.')),
          'chats': ch, 'apps': ap},
         {'id': 'folders', 'title': 'Folders', 'done': any(r['ok'] for r in fo['rows']),
          'status': (f"{sum(1 for r in fo['rows'] if r['ok'])} work folder(s); {ch['in_scope']} chats were held in them." if fo['rows'] else
@@ -520,6 +533,23 @@ def save(b):
         except Exception:  # noqa: BLE001  the server writes them at its next start as well
             pass
     return {'ok': True, 'state': state()}, 200
+
+
+def key(b):
+    """Keep (or remove) the owner's API key in the system's password store. The key is never returned, logged or stored
+    in a file of Jarvis's."""
+    from . import keystore
+    b = b or {}
+    if b.get('remove'):
+        keystore.remove()
+        forget()
+        return {'ok': True, 'state': state()}, 200
+    try:
+        keystore.put(b.get('key'))
+    except keystore.KeyError_ as e:
+        return {'ok': False, 'error': str(e)}, 400
+    forget()
+    return {'ok': True, 'where': keystore.where(), 'state': state()}, 200
 
 
 def check(b):

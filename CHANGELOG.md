@@ -10,6 +10,9 @@ tag is newer than the copy you run, and only updates on your press.
 - Privacy: a copy of everything, and erase everything (to the Trash, or for good).
 - Updates from the app, from the repository's release tags.
 - The `jarvis` command and `install.sh`.
+- Linux and Windows: file locks, process groups and the exit-code wrapper go through one portable helper; `install.ps1`
+  for Windows (not yet tried on a Windows computer).
+- An API key in place of a Claude plan: the key in the system's password store, the cost of each run counted, background work held at a daily limit in dollars.
 - Optional parts: listening extras for the Mac app, pull-request watch, read-only access to your repositories.
 
 ## 0.0.1

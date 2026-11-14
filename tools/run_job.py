@@ -23,6 +23,7 @@ job.json "check". Write the check BEFORE starting the job: it should read the ou
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))   # the repository: a tool run by itself finds the package
 from jarvis import paths
+from jarvis import procs
 import glob, json, os, subprocess, sys
 from datetime import datetime
 
@@ -121,7 +122,7 @@ def main(argv):
             sys.exit('no job here')
         import signal
         try:
-            os.killpg(os.getpgid(int(pid)), signal.SIGTERM)
+            procs.signal_group(int(pid), signal.SIGTERM)
         except (OSError, ValueError):
             pass
         j.update(state='failed', exit='stopped', ended=now()); write(d, j)
@@ -168,7 +169,7 @@ def main(argv):
         log = open(os.path.join(d, 'run.log'), 'ab')
         write(d, {'state': 'starting', 'pid': None, 'cmd': run, 'started': now()})
         p = subprocess.Popen([sys.executable, '-c', wrapper, d] + run, cwd=d, stdout=log, stderr=subprocess.STDOUT,
-                             stdin=subprocess.DEVNULL, start_new_session=True)
+                             stdin=subprocess.DEVNULL, **procs.session_kw())
         j = json.load(open(os.path.join(d, 'job.json')))
         j['pid'] = p.pid
         if j['state'] == 'starting':          # a very short command may already have written its end state
