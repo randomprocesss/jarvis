@@ -323,9 +323,22 @@ def optional():
         {'id': 'prwatch', 'label': 'Pull-request watch', 'on': bool(on.get('prwatch')) and bool(str(c.get('sources.code_workspace') or '').strip()),
          'status': 'on' if on.get('prwatch') and c.get('sources.code_workspace') else ('switched on, but no workspace is named' if on.get('prwatch') else 'off'),
          'keys': ['modules.prwatch', 'sources.code_workspace'], 'value': str(c.get('sources.code_workspace') or '')},
-        {'id': 'deploy_gate', 'label': 'Deploy gate', 'on': bool(on.get('deploy_gate')), 'status': 'on' if on.get('deploy_gate') else 'off',
-         'keys': ['modules.deploy_gate']},
+        {'id': 'deploy_gate', 'label': 'Deploy gate: review what is about to be pushed', 'on': bool(on.get('deploy_gate')),
+         'status': _gate_status(bool(on.get('deploy_gate'))), 'keys': ['modules.deploy_gate'],
+         'how': 'What it watches is named in the settings file ([gate]); docs/DEPLOY-GATE.md says how'},
     ]
+
+
+def _gate_status(on):
+    """The deploy gate in one line: off, on with what it watches, or switched on with what is still missing."""
+    if not on:
+        return 'off'
+    from .modules import deploy_gate
+    s = deploy_gate._settings()
+    if not s.get('ready'):
+        return 'switched on, but ' + str(s.get('why') or 'not set up')
+    n = len(s.get('repos') or [])
+    return f"on, watching {n} repositor{'y' if n == 1 else 'ies'}"
 
 
 def trust():
