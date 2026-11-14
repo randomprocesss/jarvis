@@ -123,7 +123,8 @@ def files_under(root):
     for dp, dn, fn in os.walk(root):
         dn[:] = [d for d in dn if d not in SKIP_DIRS]
         for f in sorted(fn):
-            yield os.path.join(dp, f)
+            if f != '.git':                               # in a git worktree .git is a file: git's own pointer to its folder,
+                yield os.path.join(dp, f)                 # holding that folder's full path; like the folder, it is never part of the tree
 
 
 def scan_files(paths, cats, root=''):
