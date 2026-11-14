@@ -56,7 +56,8 @@ export default function Today() {
   const approve = async (id, choice?) => { if (await WH.setApproval(id, "approved", choice)) WH.toast("Approved. " + WH.whenApproved(), WH.store.approvals.executor ? "ok" : "info", 4500); };
   const decline = async (id) => { if (await WH.setApproval(id, "declined")) WH.toast("Declined. Nothing will happen.", "info", 2500); };
   const focus = (k) => { WH.focusItem = k; WH.go("inbox/todo/" + encodeURIComponent(k)); };
-  const line = !loaded ? "" : needs.length ? `${WH.plural(needs.length, "thing needs", "things need")} you.` : busy ? `Jarvis is working on ${WH.plural(busy, "new item")}.` : "Nothing needs you right now.";
+  const line = !loaded ? "" : needs.length ? `${WH.plural(needs.length, "thing needs", "things need")} you.` : busy ? `Jarvis is working on ${WH.plural(busy, "new item")}.` : WH.setupLeft() || "Nothing needs you right now.";
+  const unset = loaded && !needs.length && !!WH.setupLeft();
 
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-6">
@@ -64,7 +65,7 @@ export default function Today() {
           some parts apart, and they glide in as he clears them. Dark in both themes, like a lit studio set into the page. */}
       <header className="jv-dayband relative isolate min-h-[188px] overflow-hidden rounded-[20px] max-[700px]:min-h-[220px]">
         <Assembly progress={kick ? 0 : loaded ? 1 - 0.85 * Math.min(needs.length, 6) / 6 : 0} anchor={0.7} speed={kick ? 4 : 1.4}
-          title={needs.length ? "See what is holding the machine apart" : "Everything is in place"}
+          title={needs.length ? "See what is holding the machine apart" : unset ? "Finish Setup to begin" : "Everything is in place"}
           onClick={() => {
             setKick(true);
             window.setTimeout(() => setKick(false), 900);
@@ -76,7 +77,7 @@ export default function Today() {
           <div className="text-[12.5px] font-medium text-[#9aa7b2]">{now.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}</div>
           <h1 className="mt-1 text-[30px] font-semibold leading-tight tracking-[-.02em] text-white">{WH.hello(now)}</h1>
           <p className="mt-1 text-[15px] text-[#c8d2da]" data-testid="today-line">{line || " "}</p>
-          {loaded && <p className="mt-2.5 font-mono text-[10.5px] uppercase tracking-[.2em] text-[#7fd6e6]">{needs.length ? "Clear them and the machine comes together" : "Everything is in place"}</p>}
+          {loaded && <p className="mt-2.5 font-mono text-[10.5px] uppercase tracking-[.2em] text-[#7fd6e6]">{needs.length ? "Clear them and the machine comes together" : unset ? "Finish Setup to begin" : "Everything is in place"}</p>}
         </div>
       </header>
 
@@ -98,7 +99,8 @@ export default function Today() {
             {loaded && <Chip tone={needs.length ? "warn" : "ok"}>{needs.length}</Chip>}
           </div>
           {!loaded ? <SkeletonList rows={3} />
-            : !needs.length ? (busy ? <Empty icon={Sparkles} title="Nothing yet">Jarvis is working on {WH.plural(busy, "new item")}. Anything that needs you shows up here.</Empty> : <Empty icon={Coffee} tone="ok" title="Nothing needs you right now">New asks appear here as soon as Jarvis has read them.</Empty>)
+            : !needs.length ? (busy ? <Empty icon={Sparkles} title="Nothing yet">Jarvis is working on {WH.plural(busy, "new item")}. Anything that needs you shows up here.</Empty> : unset ? <Empty icon={Sparkles} title="Finish Setup to begin">{WH.setupLeft()} <a href="#/setup" className="text-ion">Open Setup</a></Empty>
+              : <Empty icon={Coffee} tone="ok" title="Nothing needs you right now">New asks appear here as soon as Jarvis has read them.</Empty>)
             : (
               <div className="grid gap-2">
                 {shown.map((x) => {
@@ -168,11 +170,11 @@ export default function Today() {
             )}
           </Panel>
 
-          <Panel title="This week">
+          {WH.hasTickets() && <Panel title="This week">
             <div className="grid gap-1.5 text-[13.5px] text-ink-2">
               <a href="#/tickets" className="flex items-center justify-between gap-3 text-inherit no-underline hover:text-ion"><span>Jira tickets to check</span><b className="font-semibold tabular-nums text-ink">{check}</b></a>
             </div>
-          </Panel>
+          </Panel>}
         </div>
       </div>
     </div>

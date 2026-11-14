@@ -64,6 +64,7 @@ export default function SetupView() {
     const r = await WH.api("/api/setup_check", { what: "claude" }).catch(() => ({ error: "Jarvis is not answering" }));
     setBusy("");
     if (r && r.state) setSt(r.state);
+    WH.loadMe();
     if (r && r.result && r.result.ok) WH.toast(`Claude answered in ${r.result.secs} s.` + (r.result.expected_set?.length ? " Found connected: " + r.result.expected_set.join(", ").replace(/claude\.ai /g, "") + "." : ""), "ok", 6000);
     else WH.toast((r && r.result && r.result.error) || (r && r.error) || "The check did not finish.", "err", 8000);
   };
@@ -98,7 +99,7 @@ export default function SetupView() {
       <PageTitle title={firstTime ? "Welcome. Let's set Jarvis up." : "Setup"}
         sub={firstTime ? "A few steps, all on this page. Everything stays on this computer, in " + st.home + ". Nothing is sent, posted or changed anywhere without your press."
           : st.left ? `${st.left} step${st.left === 1 ? "" : "s"} still to do. Everything Jarvis knows about you is kept in ${st.home}.` : `Everything is in place. Your data is kept in ${st.home}.`}
-        right={st.version ? <Chip tone="mute">version {st.version}</Chip> : undefined} />
+        right={<div className="flex items-center gap-2">{!firstTime && <Button size="sm" variant="ghost" busy={busy === "demo"} disabled={!!busy} onClick={demo}>Look around the demo</Button>}{st.version ? <Chip tone="mute">version {st.version}</Chip> : null}</div>} />
 
       {firstTime && (
         <Note tone="ion">
@@ -267,7 +268,7 @@ export default function SetupView() {
 /** This version, and whether a newer release is out. Updating is always the owner's press. */
 function Updates() {
   const [u, setU] = useState<any>(null), [busy, setBusy] = useState("");
-  const look = (now = false) => WH.api("/api/update" + (now ? "?now=1" : "")).then((d: any) => d && !d.error ? setU(d) : null).catch(() => null);
+  const look = (now = false) => WH.api("/api/update" + (now ? "?now=1" : "")).then((d: any) => d ? setU(d) : null).catch(() => null);   // an error is shown, not hidden
   useEffect(() => { look(); }, []);
   if (!u) return null;
   const go = async () => {

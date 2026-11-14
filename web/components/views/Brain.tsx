@@ -31,7 +31,7 @@ function Ask() {
         <Button variant="primary" size="lg" busy={busy} onClick={() => go()}>Look up</Button>
       </form>
       {!res ? <Note>Each result is one checked statement from the ledger with the note it came from. <b className="font-semibold">Current</b> is the value in force; a <b className="font-semibold">replaced</b> one shows what replaced it; a record <b className="font-semibold">in conflict</b> shows the other side. These are leads: check a number against its source before it goes to anyone.</Note>
-        : !res.records?.length ? <Empty title="No record matches">Try other words, a ticket key or a material number.</Empty> : (
+        : !res.records?.length ? <Empty title="No record matches">Try other words, a name or a ticket key.</Empty> : (
           <div className="grid gap-2">
             {res.records.map((r) => (
               <div key={r.id} className="rounded-[12px] border border-line bg-card px-4 py-3">

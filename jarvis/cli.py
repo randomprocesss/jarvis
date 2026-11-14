@@ -67,6 +67,10 @@ def stop(args):
         return 0
     gone = procs.stop(h.get('pid'), 15)
     print('Jarvis has stopped.' if gone else f'Jarvis did not stop (process {h.get("pid")}).')
+    from . import product
+    os.environ['JARVIS_PORT'] = str(p)
+    if product.demo_stop():                       # a demo left open stops with its Jarvis (the new-user trial, 14 Nov)
+        print('The demo has stopped too.')
     return 0 if gone else 1
 
 
@@ -109,6 +113,7 @@ def doctor(args):
     def line(ok, what, fix=''):
         nonlocal bad
         bad += 0 if ok else 1
+        fix = str(fix).replace('press Check again', 'run `jarvis doctor` again')   # Setup's words; the terminal has no Check button
         print(('  ok    ' if ok else '  FIX   ') + what + ('' if ok or not fix else '\n        ' + fix))
     v = sys.version_info
     line(v >= (3, 9), f'Python {v.major}.{v.minor}.{v.micro}', 'Jarvis needs Python 3.9 or newer.')

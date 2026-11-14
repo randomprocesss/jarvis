@@ -888,7 +888,7 @@ extension VoiceLayer {
         enqueueSpeak(id: "soon-\(Int(now.timeIntervalSince1970 * 1000) % 1_000_000)", text: t, kind: "other")
     }
 
-    /// Several fyi lines as one: "Two things, sir. X needs your decision. And a new approval is waiting: Y."
+    /// Several fyi lines as one: "Two things. X needs your decision. And a new approval is waiting: Y."
     func fyiDigest(_ lines: [String]) -> String {
         let strip = { (s: String) -> String in
             var t = s.trimmingCharacters(in: .whitespaces)
@@ -896,7 +896,7 @@ extension VoiceLayer {
             return t.prefix(1).uppercased() + t.dropFirst()
         }
         let n = ["", "One", "Two", "Three"], shown = Array(lines.prefix(3)).map(strip)
-        var out = "\(lines.count <= 3 ? n[lines.count] : "A few") things, sir. " + shown[0]
+        var out = "\(lines.count <= 3 ? n[lines.count] : "A few") things. " + shown[0]
         for s in shown.dropFirst() { out += " And " + s.prefix(1).lowercased() + s.dropFirst() }
         if lines.count > 3 { out += " And \(lines.count - 3) more in your inbox." }
         return out

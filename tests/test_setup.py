@@ -115,6 +115,33 @@ class Setup(unittest.TestCase):
         r = self.step('sources', body['state'])['reads']
         self.assertEqual((r['values']['sources.tracker_projects'], r['values']['sources.since'], r['site']), (['ABC'], '2026-01-01', ''))
 
+    def test_background_work_waits_until_claude_answered_and_an_app_is_connected(self):
+        # The new-user trial (14 Nov): the first round-up started a minute after install, with Claude signed out.
+        import time
+        from jarvis.spine import heartbeat
+        self.assertEqual(self.setup.ready(), {'claude': False, 'apps': False})
+        started = []
+        real = (heartbeat.dispatcher.dispatch, heartbeat.ledger.event)
+        try:   # only the round-up decision is under test: the queue and the record are left out
+            heartbeat.dispatcher.dispatch, heartbeat.ledger.event = (lambda: None), (lambda *a, **k: None)
+            hb = heartbeat.Heartbeat(lambda: 0, lambda what: started.append(what) or {'state': 'started'}, None, lambda: False)
+            hb.items_v = 0
+            hb.inbox.tick = lambda: 'cadence'                      # the inbox watcher says a round-up is due
+            quiet = lambda: hb.last.update({k: time.time() for k in ('incidents', 'autopilot', 'health', 'approvals')})
+            quiet(); hb.tick()
+            self.assertEqual(started, [])
+            self.assertTrue(hb.status['waiting_for_setup'])
+            body, code = self.setup.check({'what': 'claude'})       # the stand-in answers and reports Slack connected
+            self.assertEqual(code, 200)
+            self.assertEqual(self.setup.ready(), {'claude': True, 'apps': True})
+            hb._ready_at = 0                                         # read again at once (normally once a minute)
+            hb.last.pop('inbox', None)
+            quiet(); hb.tick()
+            self.assertEqual(started, ['roundup'])
+            self.assertFalse(hb.status['waiting_for_setup'])
+        finally:
+            heartbeat.dispatcher.dispatch, heartbeat.ledger.event = real
+
     def test_the_check_proves_claude_answers_and_finds_the_connected_apps(self):
         body, code = self.setup.check({'what': 'claude'})
         self.assertEqual(code, 200)

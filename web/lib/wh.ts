@@ -77,6 +77,10 @@ WH.isMe = (who) => { const w = String(who || "").trim().toLowerCase(); return !!
 /** "Good morning, Sam" once the name is known; "Good morning" before. */
 WH.hello = (d: Date = new Date()) => WH.greeting(d) + (WH.me.first ? ", " + WH.me.first : "");
 /** Where a ticket opens, or "" when no tracker address is set. */
+/* Before Setup is far enough, a quiet screen is not "all clear": say what is left (GET /api/me: ready). */
+WH.setupLeft = (): string => !WH.me.loaded || WH.me.demo ? "" : !(WH.me.ready || {}).claude ? "Setup isn't finished: Claude hasn't answered its check yet." : !(WH.me.ready || {}).apps ? "Setup isn't finished: no app is connected, so there is nothing to read yet." : "";
+/* Ticket screens and counts only once a ticket system is connected, or tickets were already proposed. */
+WH.hasTickets = (): boolean => !!(WH.me.apps || {}).tracker || WH.store.tickets.items.length > 0;
 WH.ticketUrl = (key) => (WH.me.ticket_base && key ? WH.me.ticket_base.replace(/\/?$/, "/") + encodeURIComponent(String(key)) : "");
 
 /* ---------- stores ---------- */

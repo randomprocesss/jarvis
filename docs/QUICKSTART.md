@@ -26,7 +26,7 @@ It checks what Jarvis needs, adds a `jarvis` command, starts Jarvis and opens it
 downloads nothing and changes nothing outside your data folder (`~/.jarvis`) and one small file, `~/.local/bin/jarvis`.
 
 On Windows: `powershell -ExecutionPolicy Bypass -File install.ps1`. Jarvis runs there in the browser (the Mac app, voice
-and phone reminders are Mac-only). The Windows installer has not yet been tried on a Windows computer; if a step
+and phone reminders are Mac-only, and so, for now, is sending: see below). The Windows installer has not yet been tried on a Windows computer; if a step
 fails, `python -m jarvis doctor` in the Jarvis folder says what is missing.
 
 ## 3. Set it up in the app
@@ -81,7 +81,8 @@ What changes with a key:
 
 ## The Mac app and voice (optional, Mac only)
 
-The browser is enough. On a Mac there is also a small app with a menu-bar icon, office mode and voice. Build it with
+In a browser you can set up, read, ask and see every draft. Sending, approving and writing anywhere need the Mac app
+for now: only its window holds the key that proves the press is yours (docs/SAFETY.md). On a Mac there is also a small app with a menu-bar icon, office mode and voice. Build it with
 `mac/build.sh` (it installs to `~/Applications/Jarvis.app`). The wake word ("Hey Jarvis") needs five small open models,
 about 15 MB: `python3 voice/setup.py` fetches them after asking. Without them the app listens when you press and speaks
 with the Mac's own voice.

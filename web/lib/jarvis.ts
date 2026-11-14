@@ -302,6 +302,8 @@ const HANDOFF = ["This one's taking a while. I'll keep at it and tell you when I
 /** Say this when it suits him (never over him or Jarvis). prio: "urgent" = work blocked or due now, the first quiet moment;
  *  "asked" = what he asked for, at a natural break (45 s at most); "fyi" = news he did not ask for, only at a break while he
  *  is at the Mac, bundled, at most every 10 minutes (Conversation.swift soonTick). Browser: on screen. */
+/* A spoken line opens with what the owner asked to be called (Setup: "What Jarvis calls you"), never a stock "sir". */
+function lead(s: string) { const c = String(WH.me.called || WH.me.first || "").trim(); const t = c ? c + ", " + s : s; return t.charAt(0).toUpperCase() + t.slice(1); }
 export function sayWhenFree(text: string, prio: "urgent" | "asked" | "fyi" = "asked") { if (S.native) post({ type: "say_soon", text, prio }); else caption(text, "info", 8000); }
 /** News he did not ask for that is about what he is talking about right now counts as asked for (relevance). */
 const STOPW = new Set("the a an to of in on for and or is are was it this that what with your you my sir needs need new waiting item items".split(" "));
@@ -321,7 +323,7 @@ const firstSentence = (t: string) => { const m = String(t || "").replace(/\s+/g,
 function deliverBg(ev: any, q: string) {
   const sp = untag(String(ev.speak || "")).trim(), text = String(ev.text || "").trim();
   addTurn({ text: `Re: ${cut(q, 70)}\n\n${answerText(sp, text) || "Done."}` });
-  if (sp) sayWhenFree(`Sir, about ${cut(q.replace(/[?.!]+$/, ""), 60)}: ${sp}`);
+  if (sp) sayWhenFree(lead(`about ${cut(q.replace(/[?.!]+$/, ""), 60)}: ${sp}`));
   toast(`Answer ready: ${cut(q, 60)}`, { duration: 12000, description: cut(untag(sp || text), 160) });
   runActions(Array.isArray(ev.actions) ? ev.actions : []);
 }
@@ -892,7 +894,7 @@ function checkWatch() {
       // he asked for it, so he hears how it went (at the next quiet moment, never over him): the result, or the question
       const { a: it } = findItem(t.rid, t.aid), what = cut(WH.clean(it?.title || "That task"), 60);
       const ask0 = (w.asks && w.asks[0] && w.asks[0].q) || (w.needs_you || [])[0] || "";
-      sayWhenFree(need.length ? `Sir, ${what} needs your decision${ask0 ? ": " + firstSentence(WH.clean(ask0)) : "."}` : `Sir, ${what} is done${w.summary ? ". " + firstSentence(WH.clean(w.summary)) : "."}`);
+      sayWhenFree(lead(need.length ? `${what} needs your decision${ask0 ? ": " + firstSentence(WH.clean(ask0)) : "."}` : `${what} is done${w.summary ? ". " + firstSentence(WH.clean(w.summary)) : "."}`));
       caption(msg, "info", 6000);
       toast.success(msg, { duration: 12000, action: openButton(t.rid, t.aid) });
     } else if (Date.now() - t.at > 4 * 3600e3) watching.delete(k);
@@ -924,7 +926,7 @@ function checkNeeds() {
   if (!needInit) { needInit = true; return; }                 // what was already waiting when the page loaded is not news
   if (!fresh.length) return;
   const one = fresh[0], msg = fresh.length === 1 ? `Needs your decision: ${cut(one.title, 60)}` : `${fresh.length} items need your decision`;
-  sayNews(fresh.length === 1 ? `Sir, ${cut(one.title, 70)} needs your decision.` : `Sir, ${fresh.length} items need your decision.`, fresh.map((f) => f.title).join(" "));
+  sayNews(lead(fresh.length === 1 ? `${cut(one.title, 70)} needs your decision.` : `${fresh.length} items need your decision.`), fresh.map((f) => f.title).join(" "));
   caption(msg, "info", 8000);
   toast(msg, { duration: 15000, action: openButton(one.rid, one.aid) });
 }
@@ -941,7 +943,7 @@ function checkAlerts() {
   for (const a of fresh) {
     const what = cut(WH.clean(a.title || "a task"), 60);
     const line =
-      a.kind === "failed" ? `Sir, ${what} didn't finish${a.why ? ": " + cut(WH.clean(a.why), 80) : "."} I've left it in the inbox.` :
+      a.kind === "failed" ? lead(`${what} didn't finish${a.why ? ": " + cut(WH.clean(a.why), 80) : "."} I've left it in the inbox.`) :
       a.kind === "stuck" ? `${what} had stalled for ${a.minutes || 25} minutes, so I restarted it where it stopped.` :
       a.kind === "long" ? `${what} has been running ${a.minutes || 45} minutes. It's still going.` :
       a.kind === "stopped" ? `I stopped ${what} after two hours. It's in the inbox; say continue if you want it to carry on.` :
@@ -951,8 +953,7 @@ function checkAlerts() {
       a.kind === "improved" ? `I've improved myself: ${cut(WH.clean(a.why || a.title || ""), 120)}. It's in Learned, and I'll undo it if it makes things worse.` :
       a.kind === "rolled_back" ? `I undid a change I made to myself: ${cut(WH.clean(a.why || ""), 120)}.` : "";
     if (!line) continue;
-    sayWhenFree(line);
-    caption(line, "info", 8000);
+    if (S.native) { sayWhenFree(line); caption(line, "info", 8000); }   // in a browser the toast alone (it showed twice)
     if (a.rid && a.aid) toast(line, { duration: 15000, action: openButton(a.rid, a.aid) });
     else toast(line, { duration: 15000 });
   }
@@ -982,7 +983,7 @@ async function checkNudges() {
   for (const r of (d && d.due) || []) {
     if (nudged.has(r.id)) continue;
     nudged.add(r.id);
-    sayWhenFree(`Sir, a reminder: ${WH.clean(r.text)}.`, "urgent");
+    sayWhenFree(lead(`a reminder: ${WH.clean(r.text)}.`), "urgent");
     toast(`Reminder: ${cut(WH.clean(r.text), 80)}`, { duration: 20000 });
     fetch("/api/reminder_done", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: r.id }) }).catch(() => {});
   }
@@ -992,7 +993,7 @@ async function checkNudges() {
     toast(msg, { id: "vpn", duration: Infinity, description: "Jarvis carries on by itself once it is connected." });
     caption(msg, "info", 10000);
     // he asked to be asked: said directly (not the once-per-10-minutes proactive line), but never over him
-    if (Date.now() - vpnSaid > 120000) { sayWhenFree(`Sir, please connect the VPN. ${who} needs the database.`, "urgent"); vpnSaid = Date.now(); }
+    if (Date.now() - vpnSaid > 120000) { sayWhenFree(lead(`please connect the VPN. ${who} needs the database.`), "urgent"); vpnSaid = Date.now(); }
   } else if (!w.length && vpnKey) {
     toast.dismiss("vpn");
     toast.success("VPN connected. Carrying on.", { duration: 5000 });

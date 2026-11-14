@@ -162,7 +162,8 @@ def healthz():
     names = sorted({t.name for t in threading.enumerate()})
     return {'ok': True, 'pid': os.getpid(), 'uptime_s': round(now - STARTED), 'threads': len(threading.enumerate()),
             'thread_names': names[:40], 'beats': {k: round(now - v) for k, v in _beats.items()},
-            'supervisor': 'launchd' if os.environ.get('XPC_SERVICE_NAME', '').startswith('com.jarvis') else 'app'}
+            'supervisor': 'launchd' if os.environ.get('XPC_SERVICE_NAME', '').startswith('com.jarvis') else 'app',
+            'demo': os.environ.get('JARVIS_DEMO') == '1'}      # so stopping the demo never stops another server on that port
 
 
 # ------------------------------------------------------------------ deep /healthz (Phase 4, HARNESS §7)

@@ -15,7 +15,23 @@ from jarvis import paths
 import hmac, json, os, threading, time
 from jarvis.spine import ledger
 
-ORIGIN = 'http://localhost:8765'
+PORT = None   # the port this server listens on (server.main sets it); the settings' port until then
+
+
+def set_port(port):
+    global PORT
+    PORT = int(port)
+
+
+def origins():
+    """The page's own addresses: localhost and 127.0.0.1 on the port this server really listens on."""
+    p = PORT
+    if not p:
+        from jarvis import config
+        p = config.load().get('server.port') or 8765
+    return (f'http://localhost:{p}', f'http://127.0.0.1:{p}')
+
+
 # The page key (Phase 3, 5 Oct 2026): Jarvis.app keeps it in the Keychain and writes it to this file just before it starts the
 # server; the server reads and deletes it on boot. A send/approve/write (T2/T3) must carry it as X-Jarvis-Key, so a worker
 # that forges Origin is still refused. No key (server not started by the app) = T2/T3 refused.
@@ -66,7 +82,7 @@ def tier(path, body):
 def from_page(headers):
     o = headers.get('Origin') or ''
     r = headers.get('Referer') or ''
-    return o == ORIGIN or (not o and r.startswith(ORIGIN + '/'))
+    return any(o == x or (not o and r.startswith(x + '/')) for x in origins())
 
 
 def check(path, body, headers):

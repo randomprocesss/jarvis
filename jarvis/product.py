@@ -83,8 +83,9 @@ def demo_leave(b=None):
 def demo_stop():
     """Stop a running demo (before an erase or an update)."""
     h = procs.health(main_port() + 1, 1.0)
-    if h and h.get('pid'):
-        procs.stop(h['pid'], 5)
+    if h and h.get('pid') and h.get('demo'):      # only a demo: never another server that happens to use that port
+        return procs.stop(h['pid'], 5)
+    return False
 
 
 # ---------------------------------------------------------------- what Jarvis keeps

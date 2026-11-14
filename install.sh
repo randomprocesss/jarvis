@@ -33,7 +33,11 @@ chmod 755 "$BIN/jarvis"
 say "The jarvis command is at $BIN/jarvis"
 case ":$PATH:" in
   *":$BIN:"*) ;;
-  *) say "That folder is not on your PATH yet. Until it is, run Jarvis as: $BIN/jarvis" ;;
+  *) say "That folder is not on your PATH yet. Until it is, run Jarvis as: $BIN/jarvis"
+     case "${SHELL:-}" in
+       */zsh)  say "To add it: echo 'export PATH=\"\$HOME/.local/bin:\$PATH\"' >> ~/.zshrc, then open a new terminal." ;;
+       */bash) say "To add it: echo 'export PATH=\"\$HOME/.local/bin:\$PATH\"' >> ~/.bashrc, then open a new terminal." ;;
+     esac ;;
 esac
 
 cd "$HERE"

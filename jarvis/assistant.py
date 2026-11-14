@@ -23,7 +23,6 @@ HUB = str(paths.home())
 VOICE = os.path.join(HUB, 'voice')
 CONV_DIR = os.path.join(VOICE, 'conversations')
 CLAUDE = (paths.claude_bin() or 'claude')
-ORIGIN = f"http://localhost:{config.load().get('server.port')}"
 MAX_Q, MAX_SCREEN, TIMEOUT, CONV_TTL = 2000, 14 * 1024, 90, 600   # screen: + the reading of the window they are looking at
 # Wait for the owner's connected apps to come up before the first turn. Without it a headless run starts while they are
 # still "pending" and has none of their tools, so Jarvis says "I can't reach that" about an app that is connected.
@@ -188,9 +187,8 @@ def system_prompt(fast=False):
 
 
 def origin_ok(headers):
-    o = headers.get('Origin') or ''
-    r = headers.get('Referer') or ''
-    return o == ORIGIN or (not o and r.startswith(ORIGIN + '/'))
+    from jarvis.spine import gateway
+    return gateway.from_page(headers)   # one check, on the port this server really listens on
 
 
 # ---------------------------------------------------------------- conversations

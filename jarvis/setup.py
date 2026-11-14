@@ -181,6 +181,14 @@ def connectors():
             'servers': [s for s in d.get('servers') or [] if isinstance(s, dict)]}
 
 
+def ready():
+    """What background work may start yet: {'claude': Claude answered Setup's check, 'apps': an app is connected too}.
+    Before that, a round-up or a scan can only fail, or spend the owner's allowance reading nothing (found in the new-user
+    trial, 14 Nov: the first round-up started a minute after install, with Claude signed out)."""
+    ok = bool((_load().get('claude_test') or {}).get('ok'))
+    return {'claude': ok, 'apps': ok and any(s.get('status') == 'connected' for s in connectors()['servers'])}
+
+
 def apps():
     """One row per app Jarvis can read through the owner's Claude account: connected or not, by Claude's last report."""
     c, seen = config.load(), connectors()

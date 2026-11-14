@@ -23,7 +23,7 @@ export const NAV: [string, string, string, any, string][] = [
 
 /* A screen of an optional part is listed only while settings have that part switched on (GET /api/me: modules). */
 const OPTIONAL: Record<string, string> = { deploy: "deploy_gate" };
-export const navShown = () => NAV.filter(([k]) => !OPTIONAL[k] || (WH.me.modules || []).includes(OPTIONAL[k]));
+export const navShown = () => NAV.filter(([k]) => (!OPTIONAL[k] || (WH.me.modules || []).includes(OPTIONAL[k])) && (k !== "tickets" || WH.hasTickets()));
 
 export function navCounts(): Record<string, number> {
   return {

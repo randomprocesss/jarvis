@@ -989,6 +989,16 @@ GET['/api/spine'] = spine_status
 GET['/api/share_check'] = share_check
 
 
+def _ready():
+    if os.environ.get('JARVIS_DEMO') == '1':
+        return {'claude': True, 'apps': True}
+    try:
+        from jarvis import setup
+        return setup.ready()
+    except Exception:
+        return {'claude': False, 'apps': False}
+
+
 def me(q=None):
     """What the screens need to know about the owner: the name to greet them by, the names their own records carry, where a
     ticket or a chat opens, their ticket projects, their own kinds of thing, the connected apps and the parts switched on."""
@@ -1001,6 +1011,7 @@ def me(q=None):
             'apps': {'slack': c.has('slack'), 'tracker': c.has('atlassian'), 'mail': c.has('microsoft 365')},
             'share': bool(share_folder()), 'modules': sorted(MODULES),
             'demo': os.environ.get('JARVIS_DEMO') == '1',           # a made-up person's data: the screens show a ribbon and nothing is sent
+            'ready': _ready(),                                       # Setup far enough for background work (jarvis/setup.py ready())
             'media': os.path.isdir(os.path.join(OUT, 'media'))}      # the pictures and loops are an optional pack: the screens ask
     #                                                             for them only when they are there
 
@@ -1342,6 +1353,7 @@ def world_jobs(since):
 def main(argv=None):
     global HEART
     parse_args(sys.argv[1:] if argv is None else argv)
+    gateway.set_port(PORT)   # the page's origin is this port, whatever the settings say
     # Started as a background job of a shell ("nohup ... &"), this process begins with SIGINT and SIGQUIT IGNORED, which
     # every worker would inherit. Preemption pauses a worker with SIGINT. A handled signal resets to the default in every
     # child at exec; an ignored one stays ignored. (Not every system has SIGQUIT.)

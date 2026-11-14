@@ -32,6 +32,21 @@ class SpineOnEmptyHome(unittest.TestCase):
         self.assertEqual(got, SPINE)
         self.assertGreaterEqual(len(SPINE), 12)
 
+    def test_page_origin_follows_the_port_the_server_listens_on(self):
+        # Found in the new-user trial (14 Nov): the origin was fixed at 8765, so on any other port every send, approval
+        # and write was refused as "not from the Jarvis page", the Mac app's window included.
+        got = run('import json\n'
+                  'from jarvis.spine import gateway\n'
+                  'from jarvis import assistant\n'
+                  'h = lambda o: {"Origin": o}\n'
+                  'before = gateway.from_page(h("http://localhost:8765"))\n'
+                  'gateway.set_port(8793)\n'
+                  'print(json.dumps([before, gateway.from_page(h("http://localhost:8793")), gateway.from_page(h("http://127.0.0.1:8793")),\n'
+                  '    gateway.from_page({"Referer": "http://localhost:8793/#/inbox"}), gateway.from_page(h("http://localhost:8765")),\n'
+                  '    gateway.from_page(h("http://localhost:87930")), gateway.from_page({"Referer": "http://localhost:8793.evil/"}),\n'
+                  '    gateway.from_page({}), assistant.origin_ok(h("http://localhost:8793"))]))', self.home)
+        self.assertEqual(got, [True, True, True, True, False, False, False, False, True])
+
     def test_loading_writes_nothing_into_the_code(self):
         before = sorted(str(p) for p in REPO.rglob('*') if '.git' not in p.parts and '__pycache__' not in p.parts)
         run('import importlib, json\n'

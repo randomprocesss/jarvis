@@ -154,6 +154,18 @@ class Demo(Base):
             self.product.demo_stop()
         self.assertIsNone(self.procs.health(demo_port, 1.0))
 
+    def test_stopping_the_demo_never_stops_another_server_on_that_port(self):
+        stopped, real = [], (self.product.procs.health, self.product.procs.stop)
+        try:
+            self.product.procs.stop = lambda pid, t=5: stopped.append(pid) or True
+            self.product.procs.health = lambda port, t=1.0: {'ok': True, 'pid': 4242}                  # someone else's server
+            self.assertFalse(self.product.demo_stop())
+            self.product.procs.health = lambda port, t=1.0: {'ok': True, 'pid': 4243, 'demo': True}    # the demo
+            self.assertTrue(self.product.demo_stop())
+        finally:
+            self.product.procs.health, self.product.procs.stop = real
+        self.assertEqual(stopped, [4243])
+
     def test_leaving_the_demo_points_back_at_the_owners_own_setup(self):
         os.environ.update(JARVIS_DEMO='1', JARVIS_MAIN_PORT='8123')
         body, code = self.product.demo_leave({})

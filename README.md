@@ -26,7 +26,8 @@ and will not do are in [docs/QUICKSTART.md](docs/QUICKSTART.md). To look around 
 Version 0.1.0, the first release for other people to install. Releases are git tags (`v0.1.0`, ...); the app offers a
 newer one on its Setup page and updates only on your press. What changed in each is in [CHANGELOG.md](CHANGELOG.md).
 
-Not in place yet: a run on a real Windows computer (the code is written for it, the Windows installer is untried).
+Not in place yet: a run on a real Windows computer (the code is written for it, the Windows installer is untried), and
+sending or approving from a plain browser: for now only the Mac app's window can press send.
 
 ## Run the tests
 

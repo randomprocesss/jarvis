@@ -28,6 +28,7 @@ class Heartbeat:
         self.status = {'started': ledger.now()}
         self.world_busy = None
         self.on_leave_slack, self.front, self.last_front, self.leave_slack_at = None, (lambda: ''), '', None
+        self._ready, self._ready_at = {'claude': False, 'apps': False}, 0
 
     def due(self, name, every):
         t = time.time()
@@ -35,6 +36,19 @@ class Heartbeat:
             self.last[name] = t
             return True
         return False
+
+    def ready(self):
+        """Setup's readiness (jarvis/setup.py ready()), read at most once a minute. Nothing in the background starts before
+        Claude has answered Setup's check; round-ups also wait for a connected app."""
+        if time.time() - self._ready_at >= 60:
+            self._ready_at = time.time()
+            try:
+                from jarvis import setup
+                self._ready = setup.ready()
+            except Exception:
+                self._ready = {'claude': False, 'apps': False}
+            self.status['waiting_for_setup'] = not self._ready['apps']
+        return self._ready
 
     def start(self):
         threading.Thread(target=self._loop, daemon=True, name='heartbeat').start()
@@ -63,7 +77,7 @@ class Heartbeat:
             threading.Thread(target=autopilot.tick, daemon=True, name='autopilot').start()
         if self.due('health', 600):                   # logins, connectors, stale watchers -> said once (off this thread)
             threading.Thread(target=health.report_problems, daemon=True, name='health-deep').start()
-        if self.due('inbox', 30):
+        if self.due('inbox', 30) and self.ready()['apps']:
             reason = self.inbox.tick()
             self.status['badges'] = self.inbox.prev
             if reason:
@@ -91,7 +105,7 @@ class Heartbeat:
                 self.last['sent_check'] = time.time()
                 self.world_busy = 'sent_check'
                 threading.Thread(target=self._world, args=('sent_check', self.on_leave_slack), daemon=True, name='world-sent_check').start()
-        if not self.world_busy:                  # world jobs (scans, mining, matching) run one at a time on their own thread,
+        if not self.world_busy and self.ready()['claude']:   # world jobs (scans, mining, matching) run one at a time on their own thread,
             for name, every, fn in self.extra:   # so a slow scan never delays dispatch or the inbox
                 if name not in self.last:         # last runs survive restarts (a restart must not re-run daily jobs)
                     try:

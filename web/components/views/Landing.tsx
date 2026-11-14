@@ -194,7 +194,8 @@ export default function Landing() {
   const needs = loaded ? needsList() : [], busy = loaded ? pendingWork() : 0, open = WH.openItems();
   const { check } = doorNumbers();
   const running = spine && Array.isArray(spine.running) ? spine.running.length : null;
-  const line = !loaded ? "Waking up…" : needs.length ? `${WH.plural(needs.length, "thing needs", "things need")} you.` : busy ? `Jarvis is working on ${WH.plural(busy, "new item")}.` : "Nothing needs you right now.";
+  const line = !loaded ? "Waking up…" : needs.length ? `${WH.plural(needs.length, "thing needs", "things need")} you.` : busy ? `Jarvis is working on ${WH.plural(busy, "new item")}.` : WH.setupLeft() || "Nothing needs you right now.";
+  const unset = loaded && !needs.length && !!WH.setupLeft();
   const core: CoreState = J.speaking ? "speaking" : J.thinking ? "thinking" : J.awake ? "listening" : "idle";
   const stateWord = J.speaking ? "Speaking" : J.thinking ? "Thinking" : J.awake ? "Listening" : "Online";
   const staged = film !== "off" && !explore;
@@ -203,7 +204,7 @@ export default function Landing() {
     ["Needs you", loaded ? needs.length : "–", "today", needs.length ? "text-[#ffcf7a]" : "text-[#8fe3b4]"],
     ["Open items", loaded ? open.length : "–", "inbox", "text-glass-ink"],
     ["Working now", running ?? "–", "activity", "text-glass-ink"],
-    ["Tickets to check", check, "tickets", "text-glass-ink"],
+    ...(WH.hasTickets() ? [["Tickets to check", check, "tickets", "text-glass-ink"] as [string, any, string, string]] : []),
   ];
   const enter = (d: number) => ({ "data-in": String(d) });
   return (
@@ -290,7 +291,7 @@ export default function Landing() {
           <motion.h1 {...enter(0.1)} className={cn("jv-in jv-d1 jv-hero-title m-0", staged ? "mt-2 !text-[clamp(34px,4.6vw,64px)]" : "mt-[clamp(8px,2.2vh,24px)]")}>{WH.hello(now)}</motion.h1>
           <motion.p {...enter(0.18)} className="jv-in jv-d2 m-0 mt-3 text-[clamp(15px,1.5vw,19px)] text-glass-ink-2">{line}</motion.p>
           <motion.div {...enter(0.28)} className={cn("jv-in jv-d3 flex flex-col items-center gap-3", staged ? "mt-[clamp(12px,2.2vh,22px)]" : "mt-[clamp(16px,3.2vh,32px)]")}>
-            <a href="#/today" data-enter className="btn-arc btn-enter" onClick={(e) => { e.preventDefault(); goIn(); }}>Enter Jarvis <ArrowRight size={18} strokeWidth={2} /></a>
+            <a href={unset ? "#/setup" : "#/today"} data-enter className="btn-arc btn-enter" onClick={(e) => { e.preventDefault(); goIn(unset ? "setup" : "today"); }}>{unset ? "Finish Setup" : "Enter Jarvis"} <ArrowRight size={18} strokeWidth={2} /></a>
             {!staged && <span aria-hidden className="font-mono text-[10.5px] uppercase tracking-[.22em] text-glass-mute">or press Enter ↵</span>}
           </motion.div>
           </div>

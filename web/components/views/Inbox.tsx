@@ -287,7 +287,7 @@ export default function Inbox({ sub }: { sub: string }) {
     const att = rep.attachments || [], isFile = (f: any) => /\.(xlsx|csv)$/i.test(String(f.path || "")), canv = att.filter((f: any) => !f.inline && !isFile(f)), files = att.filter(isFile);
     const attLine = (canv.length ? "\n\nAttached as a Slack canvas: " + canv.map((f: any) => f.title).join(", ") : "") + (files.length ? "\n\nLinked from your OneDrive (Analysis): " + files.map((f: any) => f.title).join(", ") : "");
     const dest = WH.replyLink(w);
-    if (!voice && !(await WH.ask(`Send this to ${rep.to || "Slack"}${where}?`, val + attLine + (dest ? `\n\nGoes to: ${dest.href}` : ""), "Send to Slack"))) return false;
+    if (!voice && !(await WH.ask(`Send this to ${rep.to || "Slack"}${where}?`, val + attLine + (dest && /^https?:/.test(dest.href) ? `\n\nGoes to: ${dest.href}` : ""), "Send to Slack"))) return false;
     let r: any;
     try { r = await WH.api("/api/slack_send", { rid, aid, text: val, voice }); } catch { r = { ok: false, error: "Jarvis server not reachable" }; }
     if (!r || !r.ok) { WH.toast((r && r.error) || "That didn't go through.", r && r.state === "unclear" ? "info" : "err", 7000); WH.loadInbox(); return false; }
