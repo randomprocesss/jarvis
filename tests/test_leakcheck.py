@@ -79,6 +79,14 @@ class LeakCheck(unittest.TestCase):
         self.assertEqual(leakcheck.main([self.root, '--words', self.words]), 1)
         leakcheck.ALLOWED.clear()
 
+    def test_a_worktrees_pointer_to_its_git_folder_is_not_part_of_the_tree(self):
+        code = '/' + 'Users' + '/realperson/code'
+        self.put('.git', 'gitdir: ' + code + '/.git/worktrees/copy\n')   # what git writes in a worktree
+        self.put('a.txt', 'clean\n')
+        self.assertEqual(self.cats_found()[0], [])
+        self.put('notes/git.txt', 'see ' + code + '\n')                  # any other file is still read
+        self.assertEqual(self.cats_found()[0], ['home path'])
+
     def test_file_name_counts(self):
         self.put('notes/vexmoor-plan.md', 'nothing here\n')
         self.assertEqual(self.cats_found()[0], ['owner'])

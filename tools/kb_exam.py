@@ -37,7 +37,10 @@ def _nums(s):
 
 
 def questions(n=150, seed=1):
-    recs = [json.loads(l) for l in open(os.path.join(OUT, 'records.jsonl'))]
+    try:
+        recs = [json.loads(l) for l in open(os.path.join(OUT, 'records.jsonl'))]
+    except OSError:
+        return []                                        # no ledger yet: nothing to ask
     byid = {r['id']: r for r in recs}
     good = [r for r in recs if r['status'] == 'current' and r['kind'] == 'fact' and r.get('checked') in ('found', 'found-by-search', 'verified')
             and _nums(r.get('value')) and r.get('final') is not False and r['workstream'] != '(memory)' and len(r.get('subject') or '') > 8]
@@ -188,6 +191,8 @@ def second_look(rows):
 def run(n=150, seed=1):
     import kb_build as K
     qs = questions(n, seed)
+    if not qs:                                           # no ledger, no checked number in it, or no question came back:
+        K.log('exam: nothing to ask; no exam taken'); return   # 0 questions would go on record as a score of 0%
     K.log(f'exam: {len(qs)} questions')
     res, cost = answer(qs)
     rows = [(q, res.get(i), grade(q, res.get(i))) for i, q in enumerate(qs)]

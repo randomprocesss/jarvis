@@ -14,7 +14,7 @@ the memory notes, their answers to Jarvis's questions, the workstream notes. Wor
 """
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))   # the repository: a tool run by itself finds the package
-from jarvis import paths
+from jarvis import config, paths
 import collections, datetime as dt, glob, json, os, re, sys
 
 HUB = str(paths.home())
@@ -172,16 +172,20 @@ def sent():
     import kb_live as L
     X = os.path.join(B, 'sources_extra')
     out = []
+    me = config.load().owner()                             # their name, as the apps show it, marks what is theirs
+    if not me:
+        return out                                         # no name in settings yet: nothing can be told apart as theirs
+    who = re.escape(me) + r'(?!\w)'
     for f in sorted(glob.glob(os.path.join(X, 'l_slack_*.txt')) + glob.glob(os.path.join(X, 'l_teams_*.txt'))):
         t = open(f, errors='replace').read()
         where = os.path.basename(f)[2:-4]
-        for m in re.finditer(r'^=== (?:Message from the owner[^\n]*? at (\S+ \S+)[^\n]*|(\S{16}) · the owner) === ?\n(.*?)(?=^=== |\Z)', t, re.M | re.S):
+        for m in re.finditer(r'^=== (?:Message from ' + who + r'[^\n]*? at (\S+ \S+)[^\n]*|(\S{16}) · ' + who + r') === ?\n(.*?)(?=^=== |\Z)', t, re.M | re.S):
             out.append((where, m.group(1) or m.group(2), m.group(3).strip()))
     for f in sorted(glob.glob(os.path.join(X, 'l_mail_*.txt'))):
         for o in L._objects(open(f, errors='replace').read()):
             fr = o.get('from') or o.get('sender') or {}
             fr = fr if isinstance(fr, dict) else {'name': str(fr)}
-            if 'The owner' not in str(fr.get('name') or (fr.get('emailAddress') or {}).get('name') or ''):
+            if me not in str(fr.get('name') or (fr.get('emailAddress') or {}).get('name') or ''):
                 continue
             body = (o.get('uniqueBody') or o.get('body') or {})
             body = body.get('content') if isinstance(body, dict) else str(body or o.get('bodyPreview') or '')
@@ -190,12 +194,12 @@ def sent():
             out.append((f"mail to {to}: {o.get('subject') or ''}", str(o.get('sentDateTime') or '')[:16], body.strip()[:3000]))
     for f in sorted(glob.glob(os.path.join(X, 'l_jira_*.txt'))):
         t = open(f, errors='replace').read()
-        for m in re.finditer(r'^\*\*Comment by the owner, (\S+?):\*\*\n(.*?)(?=^\*\*Comment by |^## |\Z)', t, re.M | re.S):
+        for m in re.finditer(r'^\*\*Comment by ' + who + r', (\S+?):\*\*\n(.*?)(?=^\*\*Comment by |^## |\Z)', t, re.M | re.S):
             key = (re.findall(r'^## ([A-Z][A-Z0-9]{1,9}-\d+)', t[:m.start()], re.M) or ['tracker'])[-1]
             out.append((f'Jira {key} comment', m.group(1), m.group(2).strip()[:3000]))
     for f in sorted(glob.glob(os.path.join(X, 'l_conf_*.txt'))):
         t = open(f, errors='replace').read()
-        if re.search(r'· author the owner ·', t[:600]):
+        if re.search('· author ' + who + ' ·', t[:600]):
             title = (re.search(r'^# (.+)$', t, re.M) or [None, 'page'])[1]
             text = re.sub(r'(?s)\{.*', '', t.split('\n', 3)[-1])          # the page text, before the raw comment objects
             out.append((f'Confluence page they wrote: {title}', '', text.strip()[:6000]))
@@ -217,6 +221,7 @@ def build(which=('R3', 'R2', 'R1')):
         answers = json.dumps(json.load(open(os.path.join(HUB, 'answers.json'))), ensure_ascii=False, indent=0)
     except (OSError, ValueError):
         answers = '(none yet)'
+    read = lambda p: open(p, errors='replace').read() if os.path.exists(p) else ''   # a new data home has no style guide yet
     for key in which:
         slug, title, tpl = NOTES[key]
         args = {'rules': RULES + '\nThe owner is ' + K._who() + '.', 'answers': answers}
@@ -225,13 +230,15 @@ def build(which=('R3', 'R2', 'R1')):
         elif key == 'R2':
             args.update(memory=_memory({'project'})[:400_000], decisions=_workstreams(('decisions-methods',))[:600_000], messages=_msgs(400))
         elif key == 'R4':
-            args.update(style=open(os.path.join(HUB, 'style.md')).read() + '\n\n' + open(os.path.join(B, 'recipients.md')).read(),
+            args.update(style=read(os.path.join(HUB, 'style.md')) + '\n\n' + read(os.path.join(B, 'recipients.md')),
                         people='\n\n'.join(f'=== {os.path.basename(f)[:-3]} ===\n' + open(f, errors='replace').read()
                                              for f in sorted(glob.glob(os.path.join(str(paths.kb()), 'people', '*.md'))))[:300_000],
                         sent='\n'.join(f'[{w} · {d}] {t}' for w, d, t in sent()))
         else:
             args.update(workstreams=_workstreams(('',)), decisions=_workstreams(('decisions-methods',))[:500_000],
                         memory=_memory({'project', 'reference', 'feedback'})[:500_000])
+        if not any(str(v).strip() for k, v in args.items() if k != 'rules' and '{' + k + '}' in tpl and v not in ('(none yet)', '{}')):
+            K.log(f'owner: {key} {slug}: nothing to read yet; no note'); continue   # a note about nothing is not asked for
         prompt = tpl.format(**args)
         K.log(f'owner: {key} {slug}: {len(prompt) / 1e6:.2f} MB of material')
         text, cost = K.ask_text(prompt, model=K.OPUS, effort='medium')
