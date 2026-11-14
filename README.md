@@ -10,36 +10,23 @@ This repository holds the code only. Everything about you (settings, messages, t
 data folder on your own computer, `~/.jarvis` unless `JARVIS_HOME` says otherwise. Nothing of yours is ever written
 into this folder.
 
-## Status
-
-Version 0.0.1: an early working copy, being built in stages. It is not ready for someone to install and use yet.
-
-In place:
-
-- the assistant, its server and its screens (`jarvis/`, `web/`)
-- the knowledge base tools: the nightly refresh, the records ledger, the screens that keep secrets and private
-  matters out (`tools/`)
-- the skills its workers follow, as templates filled in from your settings (`skills/`)
-- the Mac app (`mac/`)
-- the tests (`tests/`), passing on Python 3.9 and 3.14
-
-Not in place yet:
-
-- setting it up from the app (today the settings are a file, `config.toml` in the data folder)
-- running with an API key instead of a Claude plan, and on Windows or Linux
-- the voice helpers of the Mac app, and the deploy gate
-- the guides
-
-## Try it on made-up data
-
-Needs Python 3.9 or newer, and nothing else. The demo builds a data folder for a made-up person and tells you how to
-open it; nothing is read from, or sent to, anyone.
+## Get it and start it
 
 ```bash
-python3 -m jarvis.demo
+git clone <the address you were given> jarvis
+cd jarvis
+./install.sh
 ```
 
-It prints the command that starts the server on that folder. Then open `http://localhost:8766`.
+It opens on a Setup page in your browser; everything else is done there. The steps, the commands and what Jarvis will
+and will not do are in [docs/QUICKSTART.md](docs/QUICKSTART.md). To look around on made-up data first: `jarvis demo`.
+
+## Status
+
+Version 0.0.1: an early working copy, being built in stages. Releases are git tags (`v0.1.0`, ...); the app offers a
+newer one on its Setup page and updates only on your press. What changed in each is in [CHANGELOG.md](CHANGELOG.md).
+
+Not in place yet: running with an API key in place of a Claude plan, and Windows; the guides beyond the quick start.
 
 ## Run the tests
 

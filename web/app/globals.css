@@ -583,3 +583,10 @@ html[data-scene="core"], html[data-scene="core"] body { background: #010406; }
 /* 13 Nov: on the machine stage the four tiles sit over bright metal; a darker glass keeps their labels readable */
 :root[data-scene="core"] [data-film="still"] .jv-stat, :root[data-scene="core"] [data-film="play"] .jv-stat { background: rgba(7,10,13,.7); }
 :root[data-scene="core"] [data-film="still"] .jv-stat:hover { background: rgba(9,14,18,.8); }
+
+/* Demo mode: the ribbon sits above everything and the page moves down to make room for it (App.tsx DemoRibbon). */
+:root { --demo-h: 34px; }
+@media (max-width: 640px) { :root { --demo-h: 52px; } }
+.jv-demo body { padding-top: var(--demo-h); }
+.jv-demo aside.jv-chrome { top: var(--demo-h); }
+.jv-demo header.sticky { top: var(--demo-h); }

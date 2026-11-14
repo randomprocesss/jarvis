@@ -75,6 +75,12 @@ export default function SetupView() {
     load();
   };
   const dismiss = async (id: string) => { await WH.api("/api/setup_dismiss", { id }); load(); };
+  const demo = async () => {
+    setBusy("demo");
+    const r = await WH.api("/api/demo_start", {}).catch(() => ({ error: "Jarvis is not answering" }));
+    setBusy("");
+    if (r && r.ok && r.url) window.location.href = r.url; else WH.toast((r && r.error) || "The demo did not start.", "err", 8000);
+  };
   const act = (s: any) => { if (s.save) save(s.save, "Done."); else if (s.run === "learn") learn(); else if (s.run === "check") check(); else if (s.href) window.open(s.href, "_blank", "noopener"); };
 
   if (err && !st) return <><PageTitle title="Setup" /><Note tone="warn">{err}. Check that Jarvis is running, then reload this page.</Note></>;
@@ -93,6 +99,15 @@ export default function SetupView() {
         sub={firstTime ? "A few steps, all on this page. Everything stays on this computer, in " + st.home + ". Nothing is sent, posted or changed anywhere without your press."
           : st.left ? `${st.left} step${st.left === 1 ? "" : "s"} still to do. Everything Jarvis knows about you is kept in ${st.home}.` : `Everything is in place. Your data is kept in ${st.home}.`}
         right={st.version ? <Chip tone="mute">version {st.version}</Chip> : undefined} />
+
+      {firstTime && (
+        <Note tone="ion">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="min-w-0 flex-1">Want to see it working before you set anything up? Look around a made-up person's week: an inbox, drafts waiting, a knowledge base. Nothing in it is real and nothing is sent.</span>
+            <Button busy={busy === "demo"} disabled={!!busy} onClick={demo}>Look around first</Button>
+          </div>
+        </Note>
+      )}
 
       {st.suggestions.length > 0 && st.set_up && (
         <Panel title="Suggested" n={st.suggestions.length}>
@@ -238,6 +253,97 @@ export default function SetupView() {
           <span className="text-[13px] text-mute">A level only ever rises by your own press there, and only after your own record has earned it.</span>
         </div>
       </Step>
+
+      <Updates />
+      <Privacy busy={busy} />
+      {!firstTime && <p className="m-0 text-[13px] text-mute">Want to see a made-up person's Jarvis? <button type="button" className="text-ion underline-offset-2 hover:underline" disabled={!!busy} onClick={demo}>Open the demo</button></p>}
     </>
+  );
+}
+
+/** This version, and whether a newer release is out. Updating is always the owner's press. */
+function Updates() {
+  const [u, setU] = useState<any>(null), [busy, setBusy] = useState("");
+  const look = (now = false) => WH.api("/api/update" + (now ? "?now=1" : "")).then((d: any) => d && !d.error ? setU(d) : null).catch(() => null);
+  useEffect(() => { look(); }, []);
+  if (!u) return null;
+  const go = async () => {
+    setBusy("update");
+    const r = await WH.api("/api/update", {}).catch(() => ({ error: "Jarvis is not answering" }));
+    if (r && r.ok) { WH.toast(`Updated to ${r.to}. Jarvis is restarting; this page reloads by itself.`, "ok", 8000); setTimeout(() => location.reload(), 9000); }
+    else { setBusy(""); WH.toast((r && r.error) || "The update did not run.", "err", 9000); }
+  };
+  return (
+    <section id="setup-updates" data-setup-step="updates">
+      <Panel title="Updates" right={u.available ? <Chip tone="ion">{u.latest} available</Chip> : <Chip tone="mute">version {u.current || "?"}</Chip>}>
+        <p className="m-0 text-[14px] text-ink-2">
+          {u.available ? `Version ${u.latest.replace(/^v/, "")} is out; this is ${u.current}.` : u.why_not || u.error || `This is the newest version, ${u.current}.`}
+          {u.checked ? ` Looked ${when(u.checked)}.` : ""}
+        </p>
+        {u.available && u.why_not && <div className="mt-3"><Note tone="warn">{u.why_not}</Note></div>}
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          {u.available && u.can_update && <Button variant="primary" busy={busy === "update"} disabled={!!busy} onClick={go}>Update to {u.latest.replace(/^v/, "")}</Button>}
+          <Button size="sm" variant="ghost" disabled={!!busy} onClick={() => look(true)}>Check now</Button>
+          <span className="text-[13px] text-mute">Jarvis looks for a new release once a day, with your own git sign-in, and never updates without your press. Your settings are copied first.</span>
+        </div>
+      </Panel>
+    </section>
+  );
+}
+
+/** A copy of everything, and erasing everything. Erasing moves it to the Trash unless the owner chooses otherwise. */
+function Privacy({ busy: pageBusy }: { busy: string }) {
+  const [open, setOpen] = useState(false), [p, setP] = useState<any>(null), [typed, setTyped] = useState(""), [mode, setMode] = useState("trash");
+  const [busy, setBusy] = useState(""), [done, setDone] = useState<any>(null);
+  const size = (b: number) => b >= 1e9 ? (b / 1e9).toFixed(1) + " GB" : b >= 1e6 ? (b / 1e6).toFixed(1) + " MB" : b >= 1e3 ? Math.round(b / 1e3) + " KB" : b + " bytes";
+  const preview = async () => { setOpen(true); setP(null); const d = await WH.api("/api/erase_preview").catch(() => null); setP(d && !d.error ? d : { error: (d && d.error) || "Jarvis is not answering" }); };
+  const copy = async () => {
+    setBusy("copy");
+    const r = await WH.api("/api/export", {}).catch(() => ({ error: "Jarvis is not answering" }));
+    setBusy("");
+    if (r && r.ok) WH.toast(`A copy is saved: ${r.path} (${size(r.bytes)}).`, "ok", 10000); else WH.toast((r && r.error) || "The copy was not made.", "err", 8000);
+  };
+  const erase = async () => {
+    setBusy("erase");
+    const r = await WH.api("/api/erase", { confirm: typed, mode }).catch(() => ({ error: "Jarvis is not answering" }));
+    setBusy("");
+    if (r && r.ok) setDone(r); else WH.toast((r && r.error) || "Nothing was removed.", "err", 9000);
+  };
+  if (done) return (
+    <Panel title="Privacy"><Note tone="ion">Everything Jarvis knew about you was {done.where}. Jarvis has stopped. Starting it again begins a new setup.</Note></Panel>
+  );
+  return (
+    <section id="setup-privacy" data-setup-step="privacy">
+      <Panel title="Privacy">
+        <p className="m-0 text-[14px] text-ink-2">Everything Jarvis knows about you is on this computer, in one folder. No usage data, crash report or copy of it is ever sent anywhere.</p>
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <Button size="sm" busy={busy === "copy"} disabled={!!busy || !!pageBusy} onClick={copy}>Download a copy</Button>
+          {!open && <Button size="sm" variant="ghost" disabled={!!busy || !!pageBusy} onClick={preview}>Erase everything Jarvis knows about me…</Button>}
+        </div>
+        {open && (
+          <div className="mt-4 grid gap-3 rounded-[10px] border border-bad/30 bg-bad-soft/40 px-4 py-3" data-erase>
+            {!p ? <Loading rows={3} /> : p.error ? <Note tone="warn">{p.error}</Note> : (<>
+              <b className="text-[14px] text-ink">This removes, from {p.home}:</b>
+              <ul className="m-0 grid gap-1 pl-5 text-[13.5px] text-ink-2">
+                {[...p.rows, ...p.also].map((r: any) => <li key={r.name}><span className="text-ink">{r.what}</span> <span className="text-mute">({size(r.bytes)})</span></li>)}
+              </ul>
+              <p className="m-0 text-[13.5px] text-ink-2">{p.stays}</p>
+              {!p.safe && <Note tone="warn">This data folder does not look like Jarvis's own folder, so erasing is not offered. Move it to the Trash by hand if you are sure.</Note>}
+              {p.safe && (<>
+                <div className="grid gap-1.5 text-[13.5px] text-ink-2">
+                  <label className="flex items-center gap-2"><input type="radio" checked={mode === "trash"} onChange={() => setMode("trash")} /> Move it to {p.trash}, where it can be taken back (recommended)</label>
+                  <label className="flex items-center gap-2"><input type="radio" checked={mode === "forever"} onChange={() => setMode("forever")} /> Erase it for good. This cannot be undone.</label>
+                </div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <input className="w-[160px] rounded-md border border-line bg-transparent px-3 py-1.5 font-mono text-[14px] text-ink outline-none focus:border-bad" value={typed} onChange={(e) => setTyped(e.target.value)} placeholder="type ERASE" aria-label="Type ERASE to confirm" />
+                  <Button variant="danger" busy={busy === "erase"} disabled={!!busy || typed !== "ERASE"} onClick={erase}>{mode === "forever" ? "Erase for good" : "Move to the Trash"}</Button>
+                  <Button variant="ghost" disabled={!!busy} onClick={() => { setOpen(false); setTyped(""); }}>Cancel</Button>
+                </div>
+              </>)}
+            </>)}
+          </div>
+        )}
+      </Panel>
+    </section>
   );
 }

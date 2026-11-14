@@ -33,7 +33,8 @@ def load_page_key():
     except OSError:
         pass
     return bool(PAGE_KEY)
-TIER = {'/api/setup_save': 'T1', '/api/setup_check': 'T1', '/api/setup_dismiss': 'T1', '/api/setup_learn': 'T1',      # the owner's own settings, from the Setup screen
+TIER = {'/api/demo_start': 'T1', '/api/demo_leave': 'T1', '/api/export': 'T1', '/api/erase': 'T1', '/api/update': 'T1',
+        '/api/setup_save': 'T1', '/api/setup_check': 'T1', '/api/setup_dismiss': 'T1', '/api/setup_learn': 'T1',      # the owner's own settings, from the Setup screen
         '/api/inbox_tick': 'T1', '/api/answer': 'T1', '/api/jarvis_task': 'T1', '/api/run_now': 'T1', '/api/tickets_save': 'T1',
         '/api/consult_done': 'T1', '/api/reminder_done': 'T1', '/api/jarvis_drop': 'T1', '/api/jarvis_model': 'T1',
         '/api/open_output': 'T1',
@@ -44,6 +45,9 @@ TIER = {'/api/setup_save': 'T1', '/api/setup_check': 'T1', '/api/setup_dismiss':
         # 12 Nov (the ladder): raising a level is his press in the app window; lowering one and stopping a held reply are the
         # safe direction and work from any local page
         '/api/ladder_raise': 'T2', '/api/ladder_lower': 'T1', '/api/held_stop': 'T1'}
+# In the demo these would start a run or reach outside it: refused there, whatever their tier.
+DEMO_REFUSED = {'/api/run_now', '/api/jarvis_task', '/api/setup_learn', '/api/setup_check', '/api/setup_save', '/api/research', '/api/export',
+                '/api/erase', '/api/update', '/api/demo_start', '/api/share_file', '/api/watch'}
 QUIET = {'/api/jarvis_drop', '/api/consult_done', '/api/reminder_done', '/api/jarvis_prewarm'}   # too chatty to record
 _recent, _lock = {}, threading.Lock()
 
@@ -68,6 +72,8 @@ def from_page(headers):
 def check(path, body, headers):
     """(ok, error). T2/T3 only from the Jarvis page."""
     t = tier(path, body)
+    if os.environ.get('JARVIS_DEMO') == '1' and (t in ('T2', 'T3') or path in DEMO_REFUSED):
+        return False, 'This is the demo: nothing is sent, run or changed outside it. Leave the demo to use your own Jarvis.'
     if t in ('T2', 'T3'):
         if not from_page(headers):
             ledger.event('gateway_refused', path, 'unknown', {'tier': t, 'why': 'not from the Jarvis page'})

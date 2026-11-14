@@ -21,6 +21,21 @@ import OfficeView from "@/components/views/Office";
 import SetupView from "@/components/views/Setup";
 import { useJarvis, jarvis } from "@/lib/jarvis";
 
+/** In the demo: says so on every screen, and leads back to the owner's own Jarvis. */
+function DemoRibbon() {
+  const [on, setOn] = useState(!!WH.me.demo);
+  useEffect(() => WH.on("me", () => setOn(!!WH.me.demo)), []);
+  useEffect(() => { document.documentElement.classList.toggle("jv-demo", on); }, [on]);      // the page makes room for it (globals.css)
+  if (!on) return null;
+  const leave = async () => { const r = await WH.api("/api/demo_leave", {}).catch(() => null); if (r && r.url) window.location.href = r.url; };
+  return (
+    <div role="status" data-demo-ribbon className="fixed inset-x-0 top-0 z-[60] flex h-[var(--demo-h)] items-center justify-center gap-3 overflow-hidden bg-warn px-4 text-[13px] font-semibold text-white">
+      <span>Demo: a made-up person's week. Nothing here is real, and nothing is sent.</span>
+      <button type="button" onClick={leave} className="rounded-full bg-white/20 px-3 py-0.5 text-[12.5px] font-semibold text-white hover:bg-white/30">Leave the demo</button>
+    </div>
+  );
+}
+
 function ViewHost({ name, sub }: { name: string; sub: string }) {
   // A new view starts at the top (moving between tabs of the same view does not).
   useLayoutEffect(() => { window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior }); }, []);
@@ -139,6 +154,7 @@ export default function App() {
         </motion.div>
       ) : (<>
         <Ambient />
+        <DemoRibbon />
         <Sidebar name={route.name} collapsed={collapsed} onCollapse={toggleSb} />
         <MobileNav name={route.name} open={menu} onOpenChange={setMenu} />
         <div className={cn("jv-shell min-h-screen transition-[padding] duration-200 ease-out", collapsed ? "min-[900px]:pl-[68px]" : "min-[900px]:pl-[232px]")}>

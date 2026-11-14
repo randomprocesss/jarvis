@@ -997,6 +997,7 @@ def me(q=None):
             'projects': c.own_projects(), 'kinds': {k: entities.folder(k) for k in sorted(entities.custom())},
             'apps': {'slack': c.has('slack'), 'tracker': c.has('atlassian'), 'mail': c.has('microsoft 365')},
             'share': bool(share_folder()), 'modules': sorted(MODULES),
+            'demo': os.environ.get('JARVIS_DEMO') == '1',           # a made-up person's data: the screens show a ribbon and nothing is sent
             'media': os.path.isdir(os.path.join(OUT, 'media'))}      # the pictures and loops are an optional pack: the screens ask
     #                                                             for them only when they are there
 
@@ -1010,6 +1011,15 @@ def _setup():
 
 
 GET['/api/setup'] = lambda q=None: _setup().state(q)          # the Setup screen: steps, checks and suggestions (jarvis/setup.py)
+
+
+def _product():
+    from jarvis import product
+    return product
+
+
+GET['/api/erase_preview'] = lambda q=None: _product().erase_preview(q)     # demo, a copy, erase, update (jarvis/product.py)
+GET['/api/update'] = lambda q=None: _product().update_state(q)
 GET['/api/watching'] = watching
 
 
@@ -1018,6 +1028,10 @@ JARVIS_PAGE_ONLY = ('/api/jarvis', '/api/jarvis_task', '/api/jarvis_prewarm', '/
 
 def post(path, b):
     """(body, status) for every POST except /api/jarvis (which streams)."""
+    if path in ('/api/demo_start', '/api/demo_leave', '/api/export', '/api/erase', '/api/update'):          # jarvis/product.py
+        p = _product()
+        return {'/api/demo_start': p.demo_start, '/api/demo_leave': p.demo_leave, '/api/export': p.export, '/api/erase': p.erase,
+                '/api/update': p.update}[path](b)
     if path in ('/api/setup_save', '/api/setup_check', '/api/setup_dismiss', '/api/setup_learn'):       # the Setup screen (jarvis/setup.py)
         s = _setup()
         return {'/api/setup_save': s.save, '/api/setup_check': s.check, '/api/setup_dismiss': s.dismiss, '/api/setup_learn': s.learn}[path](b)
@@ -1335,6 +1349,13 @@ def main(argv=None):
     # what every worker inherits and cannot change: may shared text name the assistant? (tools/worker_hook.py reads it)
     os.environ['JARVIS_AI_WORDING'] = str(config.load().get('sharing.ai_wording') or 'never')
     os.environ['JARVIS_PORT'], os.environ['JARVIS_PYTHON'] = str(PORT), paths.python()      # for the restart script
+    try:                                             # data kept by an older version is carried forward first (jarvis/migrations)
+        from jarvis import migrations
+        ran = migrations.run()
+        if ran:
+            sys.stderr.write(f'{dt.datetime.now():%Y-%m-%d %H:%M:%S} data carried forward: steps {ran}\n'); sys.stderr.flush()
+    except Exception as e:                           # said in the log and on /healthz; the server still starts
+        sys.stderr.write(f'{dt.datetime.now():%Y-%m-%d %H:%M:%S} a data step failed: {e.__class__.__name__}: {e}\n'); sys.stderr.flush()
     ledger.connect().close()                         # the ledger exists, with its tables, before anything reads it
     health.install(PORT)     # crash logs, thread deaths, pidfile (spine/health.py): never die silently
     if tracker.use_token():

@@ -70,7 +70,7 @@ WH.log = (title: string, text: any) => {
 };
 
 /* ---------- who Jarvis works for (GET /api/me): their name, where their tickets and chats open, what is switched on ---------- */
-WH.me = { set_up: false, name: "", first: "", called: "", ticket_base: "", slack_workspace: "", projects: [], kinds: {}, apps: {}, share: false, modules: [], media: false };
+WH.me = { set_up: false, name: "", first: "", called: "", ticket_base: "", slack_workspace: "", projects: [], kinds: {}, apps: {}, share: false, modules: [], media: false, demo: false } as any;
 WH.loadMe = async () => { try { const d = await WH.api("/api/me"); if (d && !d.error) { WH.me = { ...WH.me, ...d, loaded: true }; WH.emit("me"); } } catch {} };
 /** Is this name the owner's own (their records say "You", their name or their first name)? */
 WH.isMe = (who) => { const w = String(who || "").trim().toLowerCase(); return !!w && (w === "you" || w === "owner" || w === "the owner" || (!!WH.me.name && (w === WH.me.name.toLowerCase() || w === WH.me.first.toLowerCase()))); };
