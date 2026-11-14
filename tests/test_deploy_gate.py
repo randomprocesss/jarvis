@@ -245,7 +245,7 @@ class Settings(Base):
     def test_without_file_locks_the_gate_says_it_is_not_available(self):
         osdep = self.load('osdep')
         self.assertEqual(osdep.why_not(), '')
-        p = osdep.spawn('sleep 30 & echo started', shell=True, stdout=subprocess.PIPE)   # a child that ends and leaves something running
+        p = osdep.spawn('sleep 30 >/dev/null 2>&1 & echo started', shell=True, stdout=subprocess.PIPE)   # a child that ends and leaves something running
         self.assertEqual((p.stdout.read(), p.wait()), (b'started\n', 0))
         os.killpg(p.pid, 0)                                                # still there: no error
         osdep.stop(p, grace=5)
