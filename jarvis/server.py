@@ -1002,6 +1002,14 @@ def me(q=None):
 
 
 GET['/api/me'] = me
+
+
+def _setup():
+    from jarvis import setup
+    return setup
+
+
+GET['/api/setup'] = lambda q=None: _setup().state(q)          # the Setup screen: steps, checks and suggestions (jarvis/setup.py)
 GET['/api/watching'] = watching
 
 
@@ -1010,6 +1018,9 @@ JARVIS_PAGE_ONLY = ('/api/jarvis', '/api/jarvis_task', '/api/jarvis_prewarm', '/
 
 def post(path, b):
     """(body, status) for every POST except /api/jarvis (which streams)."""
+    if path in ('/api/setup_save', '/api/setup_check', '/api/setup_dismiss', '/api/setup_learn'):       # the Setup screen (jarvis/setup.py)
+        s = _setup()
+        return {'/api/setup_save': s.save, '/api/setup_check': s.check, '/api/setup_dismiss': s.dismiss, '/api/setup_learn': s.learn}[path](b)
     if path == '/api/jarvis_task':
         return assistant.task(b), 200
     if path == '/api/jarvis_model':                       # the model switcher (voice set_model or the landing picker)

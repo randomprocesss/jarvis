@@ -18,6 +18,7 @@ import TrustView from "@/components/views/Trust";
 import InboxView from "@/components/views/Inbox";
 import TicketsView from "@/components/views/Tickets";
 import OfficeView from "@/components/views/Office";
+import SetupView from "@/components/views/Setup";
 import { useJarvis, jarvis } from "@/lib/jarvis";
 
 function ViewHost({ name, sub }: { name: string; sub: string }) {
@@ -30,6 +31,7 @@ function ViewHost({ name, sub }: { name: string; sub: string }) {
   if (name === "trust") return <TrustView sub={sub} />;
   if (name === "tickets") return <TicketsView />;
   if (name === "office") return <OfficeView />;
+  if (name === "setup") return <SetupView />;
   return <Today />;
 }
 
@@ -88,7 +90,9 @@ export default function App() {
     window.addEventListener("beforeunload", onUnload);
     document.addEventListener("visibilitychange", onVis);
     window.addEventListener("pagehide", markSeen);
-    WH.loadMe(); WH.loadInbox(); WH.loadTickets(); WH.loadJiraStatus(); WH.loadApprovals();
+    // a new install opens on Setup: until the owner has said who they are, every other screen would be empty
+    WH.loadMe().then(() => { if (WH.me.loaded && !WH.me.set_up && WH.parse().name !== "setup") location.hash = "#/setup"; });
+    WH.loadInbox(); WH.loadTickets(); WH.loadJiraStatus(); WH.loadApprovals();
     // The page key check (Phase 3): only the Jarvis app window can send, approve or write; say so plainly if this one can't.
     if ((window as any).jarvisApp?.native) WH.api("/api/key_check", {}).then((r: any) => { if (!r || !r.ok) WH.toast("Sending is blocked in this window: " + ((r && r.error) || "no answer") + " Quit and reopen Jarvis.", "err", 12000); });
     let lastV = 0, lastUi = 0;

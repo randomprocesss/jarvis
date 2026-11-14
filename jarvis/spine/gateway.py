@@ -33,7 +33,8 @@ def load_page_key():
     except OSError:
         pass
     return bool(PAGE_KEY)
-TIER = {'/api/inbox_tick': 'T1', '/api/answer': 'T1', '/api/jarvis_task': 'T1', '/api/run_now': 'T1', '/api/tickets_save': 'T1',
+TIER = {'/api/setup_save': 'T1', '/api/setup_check': 'T1', '/api/setup_dismiss': 'T1', '/api/setup_learn': 'T1',      # the owner's own settings, from the Setup screen
+        '/api/inbox_tick': 'T1', '/api/answer': 'T1', '/api/jarvis_task': 'T1', '/api/run_now': 'T1', '/api/tickets_save': 'T1',
         '/api/consult_done': 'T1', '/api/reminder_done': 'T1', '/api/jarvis_drop': 'T1', '/api/jarvis_model': 'T1',
         '/api/open_output': 'T1',
         '/api/watch': 'T1', '/api/share_file': 'T1', '/api/slack_leftover_done': 'T1', '/api/learn_signal': 'T1', '/api/learned_undo': 'T1',

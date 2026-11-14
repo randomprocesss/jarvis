@@ -3,7 +3,7 @@
    admin), with count badges. Colours come from the palette, so it reads the same in light and dark. On phones: a drawer. */
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { motion } from "framer-motion";
-import { Home as HomeIcon, LayoutDashboard, Inbox, Ticket, Clock, Search, PanelLeftClose, PanelLeftOpen, X, Activity, BrainCircuit, ShieldCheck, Gauge } from "lucide-react";
+import { Home as HomeIcon, LayoutDashboard, Inbox, Ticket, Clock, Search, PanelLeftClose, PanelLeftOpen, X, Activity, BrainCircuit, ShieldCheck, Gauge, SlidersHorizontal } from "lucide-react";
 import { WH, useWH } from "@/lib/wh";
 import { useJ, talk, setListening } from "@/lib/jarvis";
 import { cn } from "@/lib/utils";
@@ -16,6 +16,7 @@ export const NAV: [string, string, string, any, string][] = [
   ["activity", "#/activity", "Activity", Activity, "Work"],
   ["brain", "#/brain", "Brain", BrainCircuit, "Knowledge"],
   ["trust", "#/trust", "Trust", Gauge, "Control"],
+  ["setup", "#/setup", "Setup", SlidersHorizontal, "Control"],
   ["tickets", "#/tickets", "Jira tickets", Ticket, "Admin"],
 ];
 

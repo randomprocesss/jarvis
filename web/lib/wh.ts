@@ -71,7 +71,7 @@ WH.log = (title: string, text: any) => {
 
 /* ---------- who Jarvis works for (GET /api/me): their name, where their tickets and chats open, what is switched on ---------- */
 WH.me = { set_up: false, name: "", first: "", called: "", ticket_base: "", slack_workspace: "", projects: [], kinds: {}, apps: {}, share: false, modules: [], media: false };
-WH.loadMe = async () => { try { const d = await WH.api("/api/me"); if (d && !d.error) { WH.me = { ...WH.me, ...d }; WH.emit("me"); } } catch {} };
+WH.loadMe = async () => { try { const d = await WH.api("/api/me"); if (d && !d.error) { WH.me = { ...WH.me, ...d, loaded: true }; WH.emit("me"); } } catch {} };
 /** Is this name the owner's own (their records say "You", their name or their first name)? */
 WH.isMe = (who) => { const w = String(who || "").trim().toLowerCase(); return !!w && (w === "you" || w === "owner" || w === "the owner" || (!!WH.me.name && (w === WH.me.name.toLowerCase() || w === WH.me.first.toLowerCase()))); };
 /** "Good morning, Sam" once the name is known; "Good morning" before. */
@@ -324,7 +324,7 @@ WH.openOutput = async (path) => { const r = await WH.api("/api/open_output", { p
 
 /* ---------- router + the current view's hooks into the shell (palette actions, ⌘S, dirty guard, status pill) ---------- */
 export const VIEWS: Record<string, { title: string }> = { home: { title: "Home" }, today: { title: "Today" }, inbox: { title: "Inbox" }, activity: { title: "Activity" }, brain: { title: "Brain" }, trust: { title: "Trust" },
-  tickets: { title: "Jira tickets" }, office: { title: "Office" } };
+  tickets: { title: "Jira tickets" }, office: { title: "Office" }, setup: { title: "Setup" } };
 // 12 Nov (redesign): the screens the old app had and the new one folded in, so an old link or a spoken "open watching" still lands.
 const MOVED: Record<string, string> = { "": "home", watching: "brain/watching", learned: "trust/learned", research: "brain/research" };
 WH.parse = () => {
