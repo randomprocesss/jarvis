@@ -72,21 +72,32 @@ def spawn(cmd, **kw):
 
 
 def stop(proc, grace=10):
-    """Stop a process started with spawn(), and everything in its group: ask first, wait up to `grace` seconds for it
-    to end, then insist. Processes the user may not signal are skipped; the rest still get the signal."""
+    """Stop a process started with spawn(), and everything it left in its group: ask, wait up to `grace` seconds for the
+    group to empty, then insist. `proc` is the process, or its id. With nothing of the group left, nothing happens (so
+    it is also the sweep after a child that ended by itself)."""
     if not hasattr(os, 'killpg'):
         return
-    pid = getattr(proc, 'pid', proc)
-    for sig in (signal.SIGTERM, signal.SIGKILL):
-        try:
-            os.killpg(int(pid), sig)
-        except (ProcessLookupError, PermissionError, ValueError, TypeError):
-            pass
-        if sig == signal.SIGTERM:
+    try:
+        pid = int(getattr(proc, 'pid', proc))
+        os.killpg(pid, signal.SIGTERM)
+    except ProcessLookupError:
+        return                                       # nothing of it is left
+    except (PermissionError, ValueError, TypeError):
+        return                                       # not ours to signal
+    end = time.monotonic() + grace
+    while time.monotonic() < end:
+        if not (hasattr(proc, 'poll') and proc.poll() is None):      # the child itself has ended (or is not ours to ask)
             try:
-                proc.wait(timeout=grace) if hasattr(proc, 'wait') else time.sleep(grace)
-            except subprocess.TimeoutExpired:
+                os.killpg(pid, 0)
+            except ProcessLookupError:
+                return                               # and so has everything it started
+            except PermissionError:
                 pass
+        time.sleep(0.1)
+    try:
+        os.killpg(pid, signal.SIGKILL)
+    except (ProcessLookupError, PermissionError):
+        pass
     if hasattr(proc, 'wait'):
         try:
             proc.wait(timeout=5)

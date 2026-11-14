@@ -245,6 +245,13 @@ class Settings(Base):
     def test_without_file_locks_the_gate_says_it_is_not_available(self):
         osdep = self.load('osdep')
         self.assertEqual(osdep.why_not(), '')
+        p = osdep.spawn('sleep 30 & echo started', shell=True, stdout=subprocess.PIPE)   # a child that ends and leaves something running
+        self.assertEqual((p.stdout.read(), p.wait()), (b'started\n', 0))
+        os.killpg(p.pid, 0)                                                # still there: no error
+        osdep.stop(p, grace=5)
+        with self.assertRaises(ProcessLookupError):
+            os.killpg(p.pid, 0)                                            # and now nothing of it is left
+        osdep.stop(p)                                                      # stopping what is gone is nothing
         osdep.fcntl = None                                                 # what a Python on Windows looks like
         self.assertIn('not available on Windows', osdep.why_not())
         with self.assertRaises(RuntimeError):
@@ -278,7 +285,8 @@ class Candidates(Base):
         self.git(work, 'tag', '-a', 'v1.1', '-m', 'second release')
         self.git(work, 'push', '-q', 'origin', 'v1.1')
         self.cli('scan')
-        self.assertEqual(self.cands(kind='tag')[-1]['base'], 'v1.0')        # judged against the release before it
+        last = self.cands(kind='tag')[-1]
+        self.assertEqual((last['base'], last['base_label'].split(',')[0]), (m1, 'v1.0'))   # judged against the release before it
         seen = [json.loads(l) for l in (self.g / 'ledger.jsonl').read_text().splitlines()]
         self.assertEqual([(e['kind'], e['ref']) for e in seen], [('branch', 'ABC-12-totals'), ('deploy', 'main'), ('tag', 'v1.0'), ('deploy', 'main'), ('tag', 'v1.1')])
         self.assertEqual(self.calls(), [])                                 # looking never asks Claude anything
@@ -286,9 +294,10 @@ class Candidates(Base):
     def test_a_newer_commit_replaces_the_older_one_that_was_waiting(self):
         work = self.host()
         self.watch('shop')
-        b1 = self.commit(work, 'ABC-12-totals', 'a = 1\n', 'ABC-12 first try')
+        b1 = self.commit(work, 'fix/abc-12_totals', 'a = 1\n', 'first try')
         self.cli('scan')
-        b2 = self.commit(work, 'ABC-12-totals', 'a = 2\n', 'ABC-12 second try')
+        self.assertEqual(self.cands()[0]['tickets'], ['ABC-12'])           # the owner's key, as branches often write it
+        b2 = self.commit(work, 'fix/abc-12_totals', 'a = 2\n', 'ABC-12 second try')
         self.cli('scan')
         old, new = self.cands(sha=b1)[0], self.cands(sha=b2)[0]
         self.assertEqual((old['status'], old['superseded_by'], new['status']), ('superseded', new['id'], 'pending'))
@@ -713,6 +722,10 @@ class Prep(Base):
         said = []
         self.assertEqual(prep.again('shop', 'test', wt, out=type('O', (), {'write': lambda s, x: said.append(x)})()), 2)
         self.assertIn('not a worktree of the deploy gate', ''.join(said))
+        t0 = time.time()
+        rc, _ = prep.run_cmd('echo begun; sleep 30', wt, self.root / 'slow.log', dict(os.environ), timeout=1)
+        self.assertEqual((rc, (self.root / 'slow.log').read_text()), (124, 'begun\n'))       # stopped at its limit, with what it had said
+        self.assertLess(time.time() - t0, 20)
         self.assertEqual(prep.env_values(str(self.root / 'missing')), {})
         self.assertEqual(prep.blank('a made-up-token-123 b ab', ['made-up-token-123', 'ab']), 'a *** b ab')
 

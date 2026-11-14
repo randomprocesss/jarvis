@@ -21,14 +21,15 @@ In place:
   matters out (`tools/`)
 - the skills its workers follow, as templates filled in from your settings (`skills/`)
 - the Mac app (`mac/`)
+- the deploy gate, an optional part that reviews what is about to be pushed (`gate/`, `docs/DEPLOY-GATE.md`)
 - the tests (`tests/`), passing on Python 3.9 and 3.14
 
 Not in place yet:
 
 - setting it up from the app (today the settings are a file, `config.toml` in the data folder)
 - running with an API key instead of a Claude plan, and on Windows or Linux
-- the voice helpers of the Mac app, and the deploy gate
-- the guides
+- the voice helpers of the Mac app
+- the other guides
 
 ## Try it on made-up data
 

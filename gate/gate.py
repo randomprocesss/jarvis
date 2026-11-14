@@ -482,11 +482,16 @@ def default_branch(repo):
     return git(repo, 'symbolic-ref', '--short', 'HEAD', check=False)
 
 
-def previous_tag(name, series, all_tags):
-    """The release before this one in the same series (the tags are newest first)."""
-    same = [t['name'] for t in all_tags if fnmatch.fnmatchcase(t['name'], series)]
-    i = same.index(name)
-    return same[i + 1] if i + 1 < len(same) else None
+def previous_tag(repo, t, series, all_tags):
+    """The release before this one in the same series, or None: the nearest tag of the series among the commits before
+    it (what this release adds is measured from there); when none of them is tagged, the tag made just before it."""
+    by_name = {x['name']: x for x in all_tags}
+    near = git(repo, 'describe', '--tags', '--abbrev=0', '--match', series, t['sha'] + '^', check=False)
+    if near in by_name and near != t['name']:
+        return by_name[near]
+    older = [x for x in all_tags if x['name'] != t['name'] and fnmatch.fnmatchcase(x['name'], series)
+             and (dkey(x['date']), x['name']) < (dkey(t['date']), t['name'])]
+    return max(older, key=lambda x: (dkey(x['date']), x['name'])) if older else None
 
 
 def cand_id(repo, kind, ref, sha):
@@ -512,7 +517,10 @@ def is_mine(c):
 def tickets_of(c):
     """The owner's ticket keys named in the branch and in the commit messages of the change."""
     rng = [f"{c['base']}..{c['sha']}"] if c.get('base') else ['-1', c['sha']]
-    return gateconf.tickets(c['ref'].replace('_', ' ').replace('/', ' ') + '\n' + git(c['repo'], 'log', '--format=%s', *rng, check=False))[:20]
+    ref = c['ref'].replace('_', ' ').replace('/', ' ')
+    if conf().ticket_keys:                               # with the owner's keys known, a branch may write them in small letters
+        ref = ref.upper()
+    return gateconf.tickets(ref + '\n' + git(c['repo'], 'log', '--format=%s', *rng, check=False))[:20]
 
 
 _WORST = {'NO-GO': 3, 'NEEDS-INFO': 2, 'GO-WITH-NOTES': 1, 'GO': 0}
@@ -739,8 +747,10 @@ def scan(days=None, only_repo=None, st=None, fetch_errors=None):
             seen['tags'].append(t['name'])
             if first_tags and pdate(t['date']) < cutoff:
                 continue                                   # the releases that were there before the gate began
+            before = previous_tag(repo, t, series, all_tags)
             found.append({'kind': 'tag', 'repo': repo, 'ref': t['name'], 'sha': t['sha'], 'series': series,
-                          'base': previous_tag(t['name'], series, all_tags), 'base_label': 'the release before it in the same series',
+                          'base': before['sha'] if before else None,
+                          'base_label': f"{before['name']}, the release before it in the same series" if before else 'no earlier release in the same series',
                           'author': '', 'date': t['date'], 'target': t['name'], 'stage': 'release tag'})
 
     cands = st['candidates']
@@ -1170,10 +1180,11 @@ def run_review(c, timeout, prior_ids=None):
             p = osdep.spawn(args, cwd=str(wt), stdout=f, stderr=subprocess.STDOUT, env=env, stdin=subprocess.DEVNULL)
             osdep.keep_awake(p.pid)
             try:
-                return p.wait(timeout=max(1, deadline - time.monotonic()))
+                rc = p.wait(timeout=max(1, deadline - time.monotonic()))
             except subprocess.TimeoutExpired:
-                osdep.stop(p)
-                return 124
+                rc = 124
+            osdep.stop(p, grace=10 if rc == 124 else 3)    # the reviewer at its limit, and whatever a finished one left running
+            return rc
 
     try:
         logf.write_text('')

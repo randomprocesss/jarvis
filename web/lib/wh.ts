@@ -324,7 +324,8 @@ WH.openOutput = async (path) => { const r = await WH.api("/api/open_output", { p
 
 /* ---------- router + the current view's hooks into the shell (palette actions, ⌘S, dirty guard, status pill) ---------- */
 export const VIEWS: Record<string, { title: string }> = { home: { title: "Home" }, today: { title: "Today" }, inbox: { title: "Inbox" }, activity: { title: "Activity" }, brain: { title: "Brain" }, trust: { title: "Trust" },
-  tickets: { title: "Jira tickets" }, office: { title: "Office" }, setup: { title: "Setup" } };
+  tickets: { title: "Jira tickets" }, office: { title: "Office" }, setup: { title: "Setup" },
+  deploy: { title: "Deploy gate" } };   // an optional part: its screen says so when settings have it switched off
 // 12 Nov (redesign): the screens the old app had and the new one folded in, so an old link or a spoken "open watching" still lands.
 const MOVED: Record<string, string> = { "": "home", watching: "brain/watching", learned: "trust/learned", research: "brain/research" };
 WH.parse = () => {
