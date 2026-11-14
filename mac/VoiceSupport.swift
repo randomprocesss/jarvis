@@ -15,6 +15,18 @@ import Speech
 let voiceDir = "\(dataHome)/voice"                    // the owner's voice data: settings, their voice print, models, timings
 let voiceCode = "\(repoDir)/voice"                    // the helper scripts, part of the code
 let voicePython = "\(dataHome)/envs/voice/bin/python"
+/// The listening extras (the wake word, natural turn-taking) are optional: `python3 voice/setup.py` makes their Python
+/// environment and fetches their models. Without them the app listens when asked (press to talk) and says so nowhere as an error.
+func voiceExtrasReady() -> Bool {
+    FileManager.default.isExecutableFile(atPath: voicePython) && FileManager.default.fileExists(atPath: "\(voiceCode)/wake.py")
+        && FileManager.default.fileExists(atPath: "\(voiceDir)/models/hey_jarvis_v0.1.onnx")
+}
+/// What every helper inherits: the data home, so the helpers and the app agree on it however the app was started.
+func helperEnvironment() -> [String: String] {
+    var e = ProcessInfo.processInfo.environment
+    e["JARVIS_HOME"] = dataHome
+    return e
+}
 let ttsPython = "\(dataHome)/envs/tts/bin/python"
 let settingsPath = "\(voiceDir)/settings.json"
 let enrolDir = "\(voiceDir)/enrol"
@@ -68,7 +80,9 @@ final class LineProcess {
     init(_ exe: String, _ args: [String]) {
         proc.executableURL = URL(fileURLWithPath: exe)
         proc.arguments = args
+        try? FileManager.default.createDirectory(atPath: voiceDir, withIntermediateDirectories: true)      // a new data home has none yet
         proc.currentDirectoryURL = URL(fileURLWithPath: voiceDir)
+        proc.environment = helperEnvironment()
         proc.standardInput = inPipe
         proc.standardOutput = outPipe
         proc.standardError = vlogHandle ?? FileHandle.nullDevice

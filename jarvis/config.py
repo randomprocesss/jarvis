@@ -53,7 +53,8 @@ DEFAULTS = {
                 'client_domains': [],                              # a meeting with someone from these mail domains is work
                 'shared_folder': '',                               # the shared-files folder to catalogue (its file:/// address)
                 'shared_read': [],                                 # its top folders whose documents are read in full
-                'code_workspace': '',                              # the workspace on the code host, for pull requests
+                'code_workspace': '',                                              # the workspace on the code host, for pull requests
+                'code_url': '',                                                    # where their repositories live, e.g. https://github.com/name/ (read-only mirror for the assistant)
                 'pr_repos': []},                                   # repositories whose pull requests are read (default: the
                                                                    # git repositories in the work folders)
     'tracker': {'own_projects': [],                               # ticket projects that are theirs (e.g. "ABC"): the only ones a
@@ -80,7 +81,7 @@ DEFAULTS = {
                                                                    # never | allowed (takes effect at the next start)
     'notify': {'enabled': True},                                   # pings to the owner's phone or desktop
     'health': {'watch_logins': []},                                # command-line logins to watch, e.g. "gcloud"
-    'modules': {'voice': False, 'deploy_gate': False, 'vault': False,
+    'modules': {'voice': False, 'deploy_gate': False, 'vault': False, 'prwatch': False,
                 'self_improve': False},                             # Jarvis changing its own code (tested, watched, undone if worse)
     'links': {'ticket_base': ''},                                  # e.g. their tracker's "browse" address, for ticket links
     'server': {'port': 8765},

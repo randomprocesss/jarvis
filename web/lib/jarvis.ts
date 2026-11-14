@@ -12,6 +12,7 @@ export type JPending = { label: string; ms: number; until: number | null; held: 
 export type JState = {
   native: boolean; listening: boolean; awake: boolean; thinking: boolean; speaking: boolean;
   model: string; mic: string; speech: string; voice: string;
+  extras: boolean;                 // the listening extras (wake word, turn-taking) are set up on this Mac
   caption: string; capKind: "" | "heard" | "say" | "info" | "err";
   conv: string | null; turns: JTurn[];
   panel: "" | "conv" | "history"; history: any[] | null; histPick: any | null;
@@ -27,7 +28,7 @@ const CONV_MS = 10 * 60e3, WINDOW_MS = 3000;
 
 let S: JState = {
   native: false, listening: false, awake: false, thinking: false, speaking: false,
-  model: "hey_jarvis", mic: "undetermined", speech: "undetermined", voice: "",
+  model: "hey_jarvis", mic: "undetermined", speech: "undetermined", voice: "", extras: true,
   caption: "", capKind: "", conv: null, turns: [], panel: "", history: null, histPick: null,
   pending: null, voices: [], dialog: "", flags: {}, office: {},
 };
@@ -108,7 +109,7 @@ function onEvent(ev: any) {
   evSubs.forEach((f) => { try { f(ev); } catch (e) { console.error(e); } });
   switch (ev.type) {
     case "state":
-      set({ listening: !!ev.listening, awake: !!ev.awake, speaking: !!ev.speaking, model: ev.model || S.model, mic: ev.mic || S.mic, speech: ev.speech || S.speech, voice: ev.voice || S.voice, flags: ev.flags && typeof ev.flags === "object" ? ev.flags : S.flags, office: ev.office && typeof ev.office === "object" ? ev.office : S.office });
+      set({ listening: !!ev.listening, awake: !!ev.awake, speaking: !!ev.speaking, model: ev.model || S.model, mic: ev.mic || S.mic, speech: ev.speech || S.speech, voice: ev.voice || S.voice, extras: ev.extras === undefined ? S.extras : !!ev.extras, flags: ev.flags && typeof ev.flags === "object" ? ev.flags : S.flags, office: ev.office && typeof ev.office === "object" ? ev.office : S.office });
       break;
     case "wake":
       set({ awake: true }); if (S.capKind !== "say") caption("", "");

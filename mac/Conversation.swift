@@ -248,7 +248,7 @@ extension VoiceLayer {
     // MARK: - turn helper (turn.py)
 
     func startTurnHelper() {
-        guard turnProc == nil, !quitting, FileManager.default.fileExists(atPath: "\(voiceCode)/turn.py") else { return }
+        guard turnProc == nil, !quitting, voiceExtrasReady(), FileManager.default.fileExists(atPath: "\(voiceCode)/turn.py") else { return }
         let p = LineProcess(voicePython, ["\(voiceCode)/turn.py"])
         p.onLine = { [weak self] l in self?.turnLine(l) }
         p.onExit = { [weak self] in self?.turnExited() }

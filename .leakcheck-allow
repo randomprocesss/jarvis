@@ -1,0 +1,8 @@
+# Public values that look like private ids to tools/leakcheck.py. Each is named here with what it is; only the shape
+# rules skip them. Never put a private word here.
+ba2b0e0f8b7b875369a2c89cb13360ff53bac436f2895cced9f479fa65eb176f   # sha256 of openWakeWord's melspectrogram.onnx (voice/setup.py)
+70d164290c1d095d1d4ee149bc5e00543250a7316b59f31d056cff7bd3075c1f   # sha256 of openWakeWord's embedding_model.onnx
+94a13cfe60075b132f6a472e7e462e8123ee70861bc3fb58434a73712ee0d2cb   # sha256 of openWakeWord's hey_jarvis_v0.1.onnx
+1a153a22f4509e292a94e67d6f9b85e8deb25b4988682b7e174c65279d8788e3   # sha256 of silero_vad.onnx (Silero VAD v6.2.3)
+2bb026316b14a660486a75b1733cd3fbab8c2fd0314dc9af7be49f8cca967e4f   # sha256 of smart-turn-v3.2-cpu.onnx
+f766f81d3cfdf7737ac64aad813d91bbfd56bf93   # the public revision of pipecat-ai/smart-turn-v3 the model is fetched from

@@ -265,6 +265,10 @@ extension VoiceLayer {
 
     func startWake() {
         guard wake == nil, !quitting else { return }
+        guard voiceExtrasReady() else {
+            if !extrasNoted { extrasNoted = true; vlog("wake word: the listening extras are not set up (python3 voice/setup.py)") }
+            return
+        }
         let p = LineProcess(voicePython, ["\(voiceCode)/wake.py"])
         p.onLine = { [weak self] l in self?.wakeLine(l) }
         p.onExit = { [weak self] in self?.wakeExited() }

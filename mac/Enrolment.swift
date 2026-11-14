@@ -13,6 +13,7 @@ extension VoiceLayer {
         switch step {
         case "begin":
             if training { return }
+            guard voiceExtrasReady() else { emitError("Teaching Jarvis your voice needs the listening extras. Run python3 voice/setup.py in the Jarvis folder, then reopen Jarvis."); return }
             lastEnrolAt = Date()
             if testTag != nil { vlog("test: stopped (enrolment)"); finishTest() }      // his enrolment always wins over a test
             if awake { goSleep("command") }
@@ -92,6 +93,7 @@ extension VoiceLayer {
             p.executableURL = URL(fileURLWithPath: voicePython)
             p.arguments = ["\(voiceCode)/train.py", dir]
             p.currentDirectoryURL = URL(fileURLWithPath: voiceDir)
+            p.environment = helperEnvironment()
             let out = Pipe()
             p.standardOutput = out
             p.standardError = vlogHandle ?? FileHandle.nullDevice

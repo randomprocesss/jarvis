@@ -52,6 +52,7 @@ final class VoiceLayer: Voice {
     var wakeReady = false
     var wakeModel = FileManager.default.fileExists(atPath: "\(voiceDir)/personal.npz") ? "personal" : "hey_jarvis"
     var wakeExits = 0
+    var extrasNoted = false                         // "the listening extras are not set up" is logged once, never shown as an error
 
     // recognition
     var recognizer: SFSpeechRecognizer?
@@ -374,7 +375,7 @@ final class VoiceLayer: Voice {
         updateTap()             // ... and the turn helper's feed + mode
         let d: [String: Any] = ["type": "state", "listening": listening, "awake": awake, "speaking": speaking,
                                 "model": wakeModel == "personal" ? "personal" : "hey_jarvis",
-                                "mic": micStatus, "speech": speechStatus, "voice": currentVoice, "flags": flagsDict(),
+                                "mic": micStatus, "speech": speechStatus, "voice": currentVoice, "flags": flagsDict(), "extras": voiceExtrasReady(),
                                 "office": Office.shared.dict]
         guard let j = try? JSONSerialization.data(withJSONObject: d, options: [.sortedKeys]), let s = String(data: j, encoding: .utf8) else { return }
         if !force && s == lastState { return }

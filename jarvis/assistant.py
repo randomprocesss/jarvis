@@ -44,12 +44,21 @@ def read_dirs():
     return dirs + [HUB, memory_dir()]
 
 
+def code_host():
+    """True when settings name where the owner's repositories live (sources.code_url, or a workspace for pull requests)."""
+    c = config.load()
+    return bool(str(c.get('sources.code_url') or '').strip() or str(c.get('sources.code_workspace') or '').strip())
+
+
 def mcp_configs():
     """The files that tell a Claude run which local tool servers to start: Jarvis's own lookup tools (written here, because it
     holds this computer's paths), then the owner's own file if they named one in settings (sources.mcp_config)."""
     own = str(paths.state('mcp.json'))
-    want = json.dumps({'mcpServers': {'jarvis': {'command': paths.python(), 'args': ['-m', 'jarvis.mcp'],
-                                                  'env': {'PYTHONPATH': str(paths.REPO), 'JARVIS_HOME': HUB}}}}, indent=1)
+    servers = {'jarvis': {'command': paths.python(), 'args': ['-m', 'jarvis.mcp'],
+                          'env': {'PYTHONPATH': str(paths.REPO), 'JARVIS_HOME': HUB}}}
+    if code_host():              # the owner's repositories on their code host, read-only (tools/repos_mcp.py)
+        servers['repos'] = {'command': paths.python(), 'args': [str(paths.tool('repos_mcp.py'))], 'env': {'JARVIS_HOME': HUB}}
+    want = json.dumps({'mcpServers': servers}, indent=1)
     try:
         have = open(own).read()
     except OSError:
@@ -64,6 +73,8 @@ def mcp_configs():
 
 # What the assistant may call. Reading only: its own lookup tools, then the read tools of the apps connected to the owner's
 # Claude account, then the read tools of their own tool servers that they listed in settings (sources.read_tools).
+REPO_READ = ['mcp__repos__' + n for n in ('repos_list', 'repo_branches', 'repo_log', 'repo_commit', 'repo_files', 'repo_read_file',
+                                          'repo_grep', 'repo_diff')]
 LOOKUP = ['mcp__jarvis__' + n for n in ('inbox_find', 'inbox_item', 'tasks_now', 'needs_find', 'memory_recall', 'project_brief',
                                         'kb_search', 'kb_entity', 'kb_facts')]
 APP_READ = ['mcp__claude_ai_Slack__slack_search_public', 'mcp__claude_ai_Slack__slack_search_public_and_private',
@@ -108,7 +119,7 @@ _TOOL = re.compile(r'^mcp__[A-Za-z0-9_.-]+__[A-Za-z0-9_.-]+$')
 def read_tools():
     c = config.load()
     own = [t for t in (str(x).strip() for x in c.get('sources.read_tools') or []) if _TOOL.match(t) and t not in APP_WRITE]
-    return ['Read', 'Grep', 'Glob'] + LOOKUP + (APP_READ if c.get('sources.claude_connectors') else []) + own
+    return ['Read', 'Grep', 'Glob'] + LOOKUP + (REPO_READ if code_host() else []) + (APP_READ if c.get('sources.claude_connectors') else []) + own
 
 
 def deny_tools():

@@ -67,6 +67,18 @@ class LeakCheck(unittest.TestCase):
         self.put('c.py', 'i = "12345678-0000-4000-8000-' + '000000000000"\n')
         self.assertEqual(self.cats_found()[0], ['e-mail address', 'home path', 'long id', 'secret-shaped string'])
 
+    def test_a_public_value_named_in_the_allow_file_passes_but_a_private_word_never_does(self):
+        sha = 'ab' * 32
+        self.put('setup.py', 'CHECKSUM = "' + sha + '"\n')
+        self.assertEqual(leakcheck.main([self.root, '--words', self.words]), 1)
+        self.put('.leakcheck-allow', sha + '   # the published checksum of a model file\nvexmoor   # not a shape: stays private\n')
+        self.assertEqual(leakcheck.main([self.root, '--words', self.words]), 1)          # the allow file itself names a private word
+        self.put('.leakcheck-allow', sha + '   # the published checksum of a model file\n')
+        self.assertEqual(leakcheck.main([self.root, '--words', self.words]), 0)
+        self.put('note.md', 'ask vexmoor\n')
+        self.assertEqual(leakcheck.main([self.root, '--words', self.words]), 1)
+        leakcheck.ALLOWED.clear()
+
     def test_file_name_counts(self):
         self.put('notes/vexmoor-plan.md', 'nothing here\n')
         self.assertEqual(self.cats_found()[0], ['owner'])

@@ -158,7 +158,7 @@ export default function Jarvis() {
     <>
       <Panel s={s} />
       <Caption s={s} />
-      <EnrolDialog open={s.dialog === "enrol"} native={s.native} />
+      <EnrolDialog open={s.dialog === "enrol"} native={s.native} extras={s.extras} />
       <VoicesDialog open={s.dialog === "voices"} native={s.native} voices={s.voices} current={s.voice} />
       <StatsDialog open={s.dialog === "stats"} />
     </>

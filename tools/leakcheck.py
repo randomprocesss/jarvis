@@ -14,6 +14,9 @@ It looks for two kinds of thing:
 
 Exit code 0 only when nothing was found. Standard library only.
 
+A public value that only looks private (a published checksum, a public release id) can be named in PATH/.leakcheck-allow,
+one per line with the reason after a "#". Only the shape rules skip such values; a word of your list is never allowed.
+
 Word list format: one entry per line. "[name]" starts a category. "re:..." is a regular expression. Anything else is a
 word or phrase, matched as a whole word (ignoring case when it has 5 letters or more). "#" starts a comment.
 """
@@ -32,6 +35,25 @@ SHAPES = {
         r'|-----BEGIN [A-Z ]*PRIVATE KEY-----|\b_auth\s*=\s*[A-Za-z0-9+/=]{16,}|AIza[0-9A-Za-z_-]{30,}|ATATT[A-Za-z0-9_=-]{20,}'),
     'long id': re.compile(r'\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b|\b[0-9a-f]{40,}\b'),
 }
+
+
+# Public values that only LOOK like something private (a published checksum, a public release id), named one by one in
+# the repository's own .leakcheck-allow with the reason. Only the shape rules skip them; a private word is never allowed.
+ALLOW_FILE = '.leakcheck-allow'
+ALLOWED = set()
+
+
+def load_allowed(root):
+    """The exact values listed in <root>/.leakcheck-allow: one per line, the reason after a #."""
+    out = set()
+    try:
+        for line in open(os.path.join(root, ALLOW_FILE), encoding='utf-8'):
+            v = line.split('#', 1)[0].strip()
+            if v:
+                out.add(v)
+    except OSError:
+        pass
+    return out
 
 
 ESCAPES = re.compile(r'\\[bBnrtswdSWDAZ]')        # \b, \n, \s and the like: two characters that are not part of a word
@@ -92,6 +114,8 @@ def scan_text(text, cats, where, hits, shapes=True):
     if shapes:
         for cat, rx in SHAPES.items():
             for m in rx.finditer(text):
+                if m.group(0) in ALLOWED:
+                    continue
                 hits.append((cat, where, lineno(m.start()), m.group(0)[:80]))
 
 
@@ -141,6 +165,7 @@ def main(argv=None):
     ap.add_argument('--show', type=int, default=25)
     a = ap.parse_args(argv)
     cats = load_words(a.words) if a.words else {}
+    ALLOWED.clear(); ALLOWED.update(load_allowed(a.path))
     if a.files_from:
         paths = [l.strip() for l in open(a.files_from) if l.strip()]
         hits, skipped, n = scan_files(paths, cats)
@@ -154,7 +179,8 @@ def main(argv=None):
     for cat, where, ln, text in hits:
         by.setdefault(cat, []).append((where, ln, text))
     print(f"{n} text files scanned" + (f", {ncommits} commits" if a.history else '') + f"; {len(skipped)} not scanned"
-          + ('' if a.words else '; NO word list given: only the shapes were checked'))
+          + ('' if a.words else '; NO word list given: only the shapes were checked')
+          + (f'; {len(ALLOWED)} public values allowed by {ALLOW_FILE}' if ALLOWED else ''))
     for cat in sorted(by, key=lambda c: -len(by[c])):
         v = by[cat]
         print(f"  {len(v):6}  {cat}  (in {len({w for w, _, _ in v})} places)")

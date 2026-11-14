@@ -15,7 +15,7 @@ const READ = `Good morning. This is a short note to read at your normal pace, th
 type Step = "intro" | "clips" | "away" | "talk" | "train" | "done" | "fail";
 const close = () => jarvis.set({ dialog: "" });
 
-export function EnrolDialog({ open, native }: { open: boolean; native: boolean }) {
+export function EnrolDialog({ open, native, extras = true }: { open: boolean; native: boolean; extras?: boolean }) {
   const [step, setStep] = useState<Step>("intro"), [n, setN] = useState(1), [miss, setMiss] = useState(""), [talking, setTalking] = useState(false);
   const [secs, setSecs] = useState(0), [res, setRes] = useState<any>(null), [test, setTest] = useState<"" | "wait" | "heard">("");
   const nRef = useRef(1), stepRef = useRef<Step>("intro"), timers = useRef<any[]>([]), started = useRef(0);
@@ -68,6 +68,10 @@ export function EnrolDialog({ open, native }: { open: boolean; native: boolean }
         <DialogTitle>Teach Jarvis your voice</DialogTitle>
         {!native ? (
           <DialogDescription>This works in the Jarvis app, which can use the microphone. Here you can type to Jarvis from ⌘K.</DialogDescription>
+        ) : !extras && step === "intro" ? (
+          <DialogDescription data-enrol-step="setup">
+            The wake word is an extra that is not set up on this Mac yet. In the Jarvis folder, run <code>python3 voice/setup.py</code> (it fetches five small open models, about 15 MB, after asking), then reopen Jarvis. Until then, press the orb to talk.
+          </DialogDescription>
         ) : step === "intro" ? (<>
           <DialogDescription>
             Jarvis learns how you say its name, so it wakes for you and not for a video or someone nearby. You say “Jarvis” 30 times, then read a short paragraph aloud, about five minutes in all. The recordings are deleted after training.
@@ -110,7 +114,7 @@ export function EnrolDialog({ open, native }: { open: boolean; native: boolean }
             <Button variant="primary" onClick={() => onOpenChange(false)}>Done</Button>
           </>) : (<>
             <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-            {step === "intro" && <Button variant="primary" onClick={() => { post({ type: "enrol", step: "begin" }); setStep("clips"); later(() => record(1), 600); }}>Start</Button>}
+            {step === "intro" && (extras || !native) && <Button variant="primary" onClick={() => { post({ type: "enrol", step: "begin" }); setStep("clips"); later(() => record(1), 600); }}>Start</Button>}
             {step === "clips" && miss.startsWith("No answer") && <Button variant="primary" onClick={() => { setMiss(""); record(nRef.current); }}>Retry</Button>}
             {step === "away" && <Button variant="primary" onClick={() => { setStep("clips"); later(() => record(AWAY_FROM), 3000); }}>Continue</Button>}
             {step === "talk" && (talking ? <Button variant="primary" onClick={stopTalk}>Done</Button> : <Button variant="primary" onClick={startTalk}>Start reading</Button>)}
