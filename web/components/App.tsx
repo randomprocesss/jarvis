@@ -19,6 +19,7 @@ import InboxView from "@/components/views/Inbox";
 import TicketsView from "@/components/views/Tickets";
 import OfficeView from "@/components/views/Office";
 import SetupView from "@/components/views/Setup";
+import DeployGateView from "@/components/views/DeployGate";
 import { useJarvis, jarvis } from "@/lib/jarvis";
 
 /** In the demo: says so on every screen, and leads back to the owner's own Jarvis. */
@@ -47,6 +48,7 @@ function ViewHost({ name, sub }: { name: string; sub: string }) {
   if (name === "tickets") return <TicketsView />;
   if (name === "office") return <OfficeView />;
   if (name === "setup") return <SetupView />;
+  if (name === "deploy") return <DeployGateView />;
   return <Today />;
 }
 

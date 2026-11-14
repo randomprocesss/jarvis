@@ -90,4 +90,4 @@ with the Mac's own voice.
 
 [SAFETY.md](SAFETY.md) what Jarvis may do on its own · [PRIVACY.md](PRIVACY.md) where your data is and what is kept out ·
 [HOW-IT-LEARNS.md](HOW-IT-LEARNS.md) · [SOURCES.md](SOURCES.md) what it reads · [CONFIG.md](CONFIG.md) every setting ·
-[ARCHITECTURE.md](ARCHITECTURE.md) · [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
+[ARCHITECTURE.md](ARCHITECTURE.md) · [DEPLOY-GATE.md](DEPLOY-GATE.md) the optional deploy gate · [TROUBLESHOOTING.md](TROUBLESHOOTING.md)

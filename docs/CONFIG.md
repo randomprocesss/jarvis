@@ -136,7 +136,28 @@ the file has its default. This page is written from the code (`tools/config_doc.
 | `modules.deploy_gate` | `false` | the deploy gate: reviews changes to your repositories before they ship (docs/DEPLOY-GATE.md) |
 | `modules.vault` | `false` | mirror your work into a notes folder, such as an Obsidian vault (vault.path) |
 | `modules.prwatch` | `false` | the pull-request watch: review requests and changes on your pull requests, as inbox items |
-| `modules.self_improve` | `false` | Jarvis changing its own code (tested, watched, undone if worse) |
+| `modules.self_improve` | `false` | Jarvis changing its own code (tested, watched, undone if worse) the deploy gate (gate/, on when modules.deploy_gate is): which changes it reviews before they go further. A line may be for every repository ("main") or for one ("api = develop staging"). Nothing named, nothing reviewed. |
+
+## gate
+
+| Setting | Default | What it does |
+|---|---|---|
+| `gate.repos` | `[]` | repositories it watches, by name under sources.code_url (default: sources.pr_repos) |
+| `gate.deploy_branches` | `[]` | branches whose push deploys (default: each repository's default branch) |
+| `gate.release_tags` | `[]` | tag patterns that are releases ("v*"); none: no tag is reviewed |
+| `gate.ignore_branches` | `[]` | branch patterns never reviewed (a bot's branch, "wip/*") |
+| `gate.build` | `[]` | the build command: "npm ci && npm run build", or "api = make build" |
+| `gate.test` | `[]` | the test command, written the same way |
+| `gate.ui_repos` | `[]` | repositories with screens: a verdict there counts only when the change was run and used locally |
+| `gate.env_file` | `""` | a file of NAME=value lines for the build and test commands only (a private registry's login); it must be named .env or .env.<word>, which no worker may read |
+| `gate.docker` | `false` | may a review start throwaway local containers? |
+| `gate.days` | `7` | a feature branch counts while its last commit is this new |
+| `gate.max_reviews` | `3` | reviews started in one run |
+| `gate.parallel` | `1` | reviews running at the same time |
+| `gate.review_minutes` | `50` | one review is stopped after this long |
+| `gate.max_attempts` | `3` | failed tries before a change is "stuck" and the owner is told |
+| `gate.usage_max` | `0.85` | reviews wait while Claude's 5-hour window is at or above this |
+| `gate.min_free_gb` | `10` | and while the disk has less free space than this |
 
 ## links
 

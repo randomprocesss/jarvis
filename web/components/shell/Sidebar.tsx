@@ -17,8 +17,13 @@ export const NAV: [string, string, string, any, string][] = [
   ["brain", "#/brain", "Brain", BrainCircuit, "Knowledge"],
   ["trust", "#/trust", "Trust", Gauge, "Control"],
   ["setup", "#/setup", "Setup", SlidersHorizontal, "Control"],
+  ["deploy", "#/deploy", "Deploy gate", ShieldCheck, "Control"],
   ["tickets", "#/tickets", "Jira tickets", Ticket, "Admin"],
 ];
+
+/* A screen of an optional part is listed only while settings have that part switched on (GET /api/me: modules). */
+const OPTIONAL: Record<string, string> = { deploy: "deploy_gate" };
+export const navShown = () => NAV.filter(([k]) => !OPTIONAL[k] || (WH.me.modules || []).includes(OPTIONAL[k]));
 
 export function navCounts(): Record<string, number> {
   return {
@@ -73,7 +78,7 @@ function ListenSwitch({ collapsed }: { collapsed: boolean }) {
 }
 
 function NavBody({ name, collapsed, id, onNav, onCollapse }: { name: string; collapsed: boolean; id: string; onNav?: () => void; onCollapse?: () => void }) {
-  useWH(["inbox", "tickets", "approvals", "theme"]);
+  useWH(["inbox", "tickets", "approvals", "theme", "me"]);
   const counts = navCounts(), run = runText();
   const native = useJ((s) => s.native);
   let group = "";
@@ -84,7 +89,7 @@ function NavBody({ name, collapsed, id, onNav, onCollapse }: { name: string; col
         {!collapsed && <a href="#/" onClick={onNav} className="text-ink no-underline">Jarvis</a>}
       </div>
       <nav aria-label="Sections" className={cn("grid gap-0.5", collapsed ? "px-2.5" : "px-3")}>
-        {NAV.map(([k, href, label, Icon, g]) => {
+        {navShown().map(([k, href, label, Icon, g]) => {
           const on = k === name, n = counts[k], head = g !== group; group = g;
           return (
             <div key={k} className="contents">

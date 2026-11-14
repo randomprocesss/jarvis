@@ -84,6 +84,29 @@ DEFAULTS = {
     # the optional parts (jarvis/modules), each switched on here
     'modules': {'deploy_gate': False, 'vault': False, 'prwatch': False,
                 'self_improve': False},                             # Jarvis changing its own code (tested, watched, undone if worse)
+    # the deploy gate (gate/, on when modules.deploy_gate is): which changes it reviews before they go further. A line may be
+    # for every repository ("main") or for one ("api = develop staging"). Nothing named, nothing reviewed.
+    'gate': {'repos': [],                                          # repositories it watches, by name under sources.code_url
+                                                                   # (default: sources.pr_repos)
+             'deploy_branches': [],                                # branches whose push deploys (default: each repository's
+                                                                   # default branch)
+             'release_tags': [],                                   # tag patterns that are releases ("v*"); none: no tag is reviewed
+             'ignore_branches': [],                                # branch patterns never reviewed (a bot's branch, "wip/*")
+             'build': [],                                          # the build command: "npm ci && npm run build", or "api = make build"
+             'test': [],                                           # the test command, written the same way
+             'ui_repos': [],                                       # repositories with screens: a verdict there counts only when
+                                                                   # the change was run and used locally
+             'env_file': '',                                       # a file of NAME=value lines for the build and test commands
+                                                                   # only (a private registry's login); it must be named .env
+                                                                   # or .env.<word>, which no worker may read
+             'docker': False,                                      # may a review start throwaway local containers?
+             'days': 7,                                            # a feature branch counts while its last commit is this new
+             'max_reviews': 3,                                     # reviews started in one run
+             'parallel': 1,                                        # reviews running at the same time
+             'review_minutes': 50,                                 # one review is stopped after this long
+             'max_attempts': 3,                                    # failed tries before a change is "stuck" and the owner is told
+             'usage_max': 0.85,                                    # reviews wait while Claude's 5-hour window is at or above this
+             'min_free_gb': 10},                                   # and while the disk has less free space than this
     'links': {'ticket_base': ''},                                  # e.g. their tracker's "browse" address, for ticket links
     'server': {'port': 8765},
 }
@@ -132,6 +155,14 @@ def _check(key, value):
         raise ConfigError('sources.since must be a date like 2026-01-31, or empty')
     if key in ('owner.name', 'owner.address_as', 'work.about') and (len(value) > (200 if key == 'work.about' else 80) or '\n' in value):
         raise ConfigError(f'{key} must be one short line')
+    if key in ('gate.days', 'gate.max_reviews', 'gate.parallel', 'gate.review_minutes', 'gate.max_attempts') and not (isinstance(value, int) and 1 <= value <= 1000):
+        raise ConfigError(f'{key} must be a whole number from 1 to 1000')
+    if key == 'gate.usage_max' and not 0 <= value <= 1:
+        raise ConfigError('gate.usage_max must be between 0 and 1')
+    if key == 'gate.min_free_gb' and value < 0:
+        raise ConfigError('gate.min_free_gb cannot be negative')
+    if key == 'gate.env_file' and value and not re.fullmatch(r'\.env(\.\w+)?', os.path.basename(value.rstrip('/\\'))):
+        raise ConfigError('gate.env_file must be a file named .env or .env.<word> (the name no worker may read)')
 
 
 class Config:

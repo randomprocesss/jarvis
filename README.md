@@ -26,8 +26,7 @@ and will not do are in [docs/QUICKSTART.md](docs/QUICKSTART.md). To look around 
 Version 0.0.1: an early working copy, being built in stages. Releases are git tags (`v0.1.0`, ...); the app offers a
 newer one on its Setup page and updates only on your press. What changed in each is in [CHANGELOG.md](CHANGELOG.md).
 
-Not in place yet: a run on a real Windows computer (the code is written for it, the Windows installer is untried);
-the guides beyond the quick start.
+Not in place yet: a run on a real Windows computer (the code is written for it, the Windows installer is untried).
 
 ## Run the tests
 
